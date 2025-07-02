@@ -37,6 +37,7 @@ const scheduleCrons = async function(client){
     // start jobs on init
     await LogHandler.removeOldLogs();
     await UserCleanupHandler.removeNonExistingUsers(client);
+    await BirthdayChecker.checkStartupBirthdays(client);
 };
 
 export default scheduleCrons;

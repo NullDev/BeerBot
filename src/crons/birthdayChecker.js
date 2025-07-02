@@ -23,7 +23,7 @@ class BirthdayChecker {
      * @param {import("../service/client.js").default} client
      * @memberof BirthdayChecker
      */
-    static async checkDailyBirthdays(client){
+    static async checkDailyBirthdays(client, force = false){
         Log.wait("[CRON] Checking daily birthdays...");
 
         let birthdayUsers = 0;
@@ -31,36 +31,70 @@ class BirthdayChecker {
         let birthdayMessages = 0;
 
         try {
+            const today = new Date().toDateString();
+            const todayKey = `birthday_check_${today}`;
+
+            const alreadyProcessed = await db.get(todayKey);
+            if (alreadyProcessed && !force){
+                Log.wait("[CRON] Daily birthday check already completed for today, skipping...");
+                return;
+            }
+
+            if (force){
+                Log.wait("[CRON] Force mode: clearing processed state and running birthday check...");
+                await db.delete(todayKey);
+            }
+
             const guilds = client.guilds.cache;
 
             for (const [guildId, guild] of guilds){
                 Log.wait(`[CRON] Checking birthdays in guild: ${guild.name} (${guildId})`);
 
                 const allData = await db.all();
-                const userKeys = allData
-                    .filter(item => item.id.startsWith("user-") && item.id.includes(".birthdate"))
-                    .map(item => item.id);
+
+                Log.debug(`[CRON] All database entries: ${allData.map(item => `${item.id}=${JSON.stringify(item.value)}`).join(", ")}`);
+
+                const userEntries = allData.filter(item => item.id.startsWith("user-"));
+                const verifiedUsers = [];
+
+                for (const userEntry of userEntries){
+                    const userData = userEntry.value;
+                    if (userData && userData.verified){
+                        const userId = userEntry.id.replace("user-", "");
+                        verifiedUsers.push({ userId, userData });
+                    }
+                }
+
+                Log.debug(`[CRON] Found ${verifiedUsers.length} verified users in guild ${guild.name}`);
 
                 const guildBirthdayUsers = [];
 
-                for (const userKey of userKeys){
-                    const userId = userKey.split(".")[0].replace("user-", "");
-                    const birthdate = await db.get(`user-${userId}.birthdate`);
-                    const birthdayPing = await db.get(`user-${userId}.birthday_ping`);
+                for (const { userId, userData } of verifiedUsers){
+                    const {birthdate} = userData;
+                    const birthdayPing = userData.birthday_ping;
 
-                    if (!/^\d{1,2}\.\d{1,2}\.\d{4}$/.test(birthdate)){
+                    Log.debug(`[CRON] Processing user ${userId}: birthdate=${birthdate}, birthdayPing=${birthdayPing}`);
+
+                    if (!birthdate || !/^\d{1,2}\.\d{1,2}\.\d{4}$/.test(birthdate)){
+                        Log.debug(`[CRON] Skipping user ${userId}: invalid date format`);
                         continue;
                     }
 
-                    const today = new Date();
+                    const todayDate = new Date();
                     const birthDate = new Date(birthdate.split(".").reverse().join("-"));
 
-                    if (today.getDate() === birthDate.getDate() && today.getMonth() === birthDate.getMonth()){
+                    Log.debug(`[CRON] Checking ${userId}: birthdate=${birthdate}, today=${todayDate.toDateString()}, birthDate=${birthDate.toDateString()}, isToday=${todayDate.getDate() === birthDate.getDate() && todayDate.getMonth() === birthDate.getMonth()}`);
+
+                    if (todayDate.getDate() === birthDate.getDate() && todayDate.getMonth() === birthDate.getMonth()){
                         birthdayUsers++;
 
                         try {
                             const member = await guild.members.fetch(userId).catch(() => null);
-                            if (!member) continue;
+                            if (!member){
+                                Log.debug(`[CRON] User ${userId} not found in guild ${guild.name}`);
+                                continue;
+                            }
+                            Log.debug(`[CRON] Found member ${member.user.displayName} (${userId}) in guild ${guild.name}`);
 
                             const currentAge = calculateAge(birthdate);
                             const newAgeRoleId = getAgeRole(currentAge);
@@ -110,6 +144,7 @@ class BirthdayChecker {
                 }
             }
 
+            await db.set(todayKey, true);
             Log.done(`[CRON] Daily birthday check complete. Found ${birthdayUsers} birthdays, updated ${roleUpdates} roles, sent ${birthdayMessages} messages.`);
         }
         catch (error){
@@ -223,6 +258,35 @@ class BirthdayChecker {
         }
         catch (error){
             Log.error("[CRON] Error in checkYearlyBirthdays:", error);
+        }
+    }
+
+    /**
+     * Check if we need to run birthday check on startup (in case bot crashed)
+     *
+     * @static
+     * @param {import("../service/client.js").default} client
+     * @memberof BirthdayChecker
+     */
+    static async checkStartupBirthdays(client){
+        Log.wait("[CRON] Checking if birthday check is needed on startup...");
+
+        try {
+            const today = new Date().toDateString();
+            const todayKey = `birthday_check_${today}`;
+
+            // Check if we've already processed today
+            const alreadyProcessed = await db.get(todayKey);
+            if (!alreadyProcessed){
+                Log.wait("[CRON] Birthday check not completed for today, running now...");
+                await this.checkDailyBirthdays(client);
+            }
+            else {
+                Log.done("[CRON] Birthday check already completed for today, skipping startup check.");
+            }
+        }
+        catch (error){
+            Log.error("[CRON] Error in checkStartupBirthdays:", error);
         }
     }
 }
