@@ -25,7 +25,7 @@ const clientReady = async function(client){
             client.on(Events.MessageCreate, async message => messageCreateHandler(message));
         });
 
-    await scheduleCrons();
+    await scheduleCrons(client);
 
     const count = client.guilds.cache.reduce((acc, guild) => acc + (guild.memberCount || 0), 0);
     client.user?.setActivity({ name: `Säuft Bier für ${count} Mitglieder.`, type: ActivityType.Playing });
