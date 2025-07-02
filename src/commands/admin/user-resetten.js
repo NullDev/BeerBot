@@ -1,0 +1,124 @@
+import { BunDB } from "bun.db";
+import {
+    SlashCommandBuilder,
+    PermissionFlagsBits,
+    MessageFlags,
+    InteractionContextType,
+} from "discord.js";
+import { config } from "../../../config/config.js";
+import Log from "../../util/log.js";
+import gLogger from "../../service/gLogger.js";
+
+// ========================= //
+// = Copyright (c) NullDev = //
+// ========================= //
+
+const db = new BunDB("./data/guild_data.sqlite");
+
+const commandName = import.meta.url.split("/").pop()?.split(".").shift() ?? "";
+
+/**
+ * Remove existing age roles from member
+ *
+ * @param {import("discord.js").GuildMember} member
+ * @return {Promise<void>}
+ */
+const removeExistingAgeRoles = async function(member){
+    const ageRoleIds = Object.values(config.roles.ages);
+    for (const roleId of ageRoleIds){
+        if (roleId && member.roles.cache.has(roleId)){
+            await member.roles.remove(roleId).catch(() => null);
+        }
+    }
+};
+
+export default {
+    data: new SlashCommandBuilder()
+        .setName(commandName)
+        .setDescription("Resetet einen Benutzer (entfernt Verifikation und Rollen).")
+        .setContexts([InteractionContextType.Guild])
+        .setDefaultMemberPermissions(PermissionFlagsBits.Administrator)
+        .addUserOption((option) =>
+            option.setName("user")
+                .setDescription("Der Benutzer der zurückgesetzt werden soll")
+                .setRequired(true)),
+
+    /**
+     * @param {import("discord.js").CommandInteraction} interaction
+     */
+    async execute(interaction){
+        await interaction.deferReply({ flags: [MessageFlags.Ephemeral] });
+
+        const userOption = interaction.options.get("user");
+        if (!userOption){
+            return await interaction.editReply({
+                content: "Du host den Benutzer vergessn.",
+            });
+        }
+
+        const targetUser = userOption.user;
+        const targetMember = await interaction.guild?.members.fetch(targetUser.id).catch(() => null);
+
+        if (!targetMember){
+            return await interaction.editReply({
+                content: "Den Benutzer konn i ned aufm Server findn.",
+            });
+        }
+
+        // Check if user is verified
+        const isVerified = await db.get(`user-${targetUser.id}.verified`);
+        if (!isVerified){
+            return await interaction.editReply({
+                content: "Der Benutzer is ned verifiziert.",
+            });
+        }
+
+        try {
+            // Remove verified role
+            if (config.roles.verified && targetMember.roles.cache.has(config.roles.verified)){
+                await targetMember.roles.remove(config.roles.verified);
+            }
+
+            // Remove all age roles
+            await removeExistingAgeRoles(targetMember);
+
+            // Delete all user data from database
+            await db.delete(`user-${targetUser.id}.verified`);
+            await db.delete(`user-${targetUser.id}.birthdate`);
+            await db.delete(`user-${targetUser.id}.birthday_ping`);
+            await db.delete(`user-${targetUser.id}.verification_state`);
+            await db.delete(`user-${targetUser.id}.verification_guild`);
+            await db.delete(`user-${targetUser.id}.verification_timeout`);
+            await db.delete(`user-${targetUser.id}.temp_birthdate`);
+            await db.delete(`user-${targetUser.id}.temp_is_full_date`);
+
+            // Log success
+            Log.done(`User ${targetUser.displayName} has been reset by ${interaction.user.displayName}`);
+
+            // Log to guild
+            await gLogger(
+                interaction,
+                "🔷┃User Reset - Erfolg",
+                `Benutzer ${targetUser} wurde von ${interaction.user} zurückgesetzt.\nAlle Verifikationsdaten und Rollen wurden entfernt.`,
+            );
+
+            return await interaction.editReply({
+                content: `Benutzer ${targetUser} wurd erfolgreich zurückgesetzt. Alle Verifikationsdaten und Rollen wurden entfernt.`,
+            });
+        }
+        catch (error){
+            Log.error(`Error during user reset for ${targetUser.displayName}:`, error);
+
+            await gLogger(
+                interaction,
+                "🔷┃User Reset - Error",
+                `Fehler beim Zurücksetzen von ${targetUser} durch ${interaction.user}:\n${error.message}`,
+                "Red",
+            );
+
+            return await interaction.editReply({
+                content: "Es is a Fehler beim Zurücksetzen aufgetreten. Bitte versuachs später no amol.",
+            });
+        }
+    },
+};
