@@ -4,6 +4,9 @@ node_modules
 # config 
 config/config.custom.js
 
+# DB
+data/*.sqlite
+
 # output
 out
 dist
