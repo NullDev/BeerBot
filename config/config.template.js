@@ -5,6 +5,7 @@ export default {
     },
     roles: {
         verified: "",
+        birthday: "",
         ages: {
             "14_17": "",
             "18_24": "",
@@ -13,5 +14,8 @@ export default {
             "36_39": "",
             "40+": "",
         },
+    },
+    channels: {
+        general: "",
     },
 };
