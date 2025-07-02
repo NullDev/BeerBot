@@ -82,7 +82,7 @@ export default {
     data: new SlashCommandBuilder()
         .setName(commandName)
         .setDescription("Infos zum Datenschutz und Datenlöschung.")
-        .setContexts([InteractionContextType.Guild, InteractionContextType.DM]),
+        .setContexts([InteractionContextType.Guild]),
     /**
      * @param {import("discord.js").CommandInteraction} interaction
      */
