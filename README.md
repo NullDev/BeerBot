@@ -1,5 +1,5 @@
 # Staff Officer Monika
-[![NullDev/DiscordJS-Template](https://img.shields.io/badge/Template%3A-NullDev%2FDiscordJS--Template-green?style=flat-square&logo=github)](https://github.com/NullDev/DiscordJS-Template) [![cd](https://github.com/NullDev/BeerBot/actions/workflows/cd.yml/badge.svg)](https://github.com/NullDev/BeerBot/actions/workflows/cd.yml) [![License](https://img.shields.io/github/license/NullDev/BeerBot?label=License&logo=Creative%20Commons)](https://github.com/NullDev/BeerBot/blob/master/LICENSE) [![GitHub closed issues](https://img.shields.io/github/issues-closed-raw/NullDev/BeerBot?logo=Cachet)](https://github.com/NullDev/BeerBot/issues?q=is%3Aissue+is%3Aclosed)
+[![NullDev/DiscordJS-Template](https://img.shields.io/badge/Template%3A-NullDev%2FDiscordJS--Template-green?style=flat-square&logo=github)](https://github.com/NullDev/DiscordJS-Template) [![License](https://img.shields.io/github/license/NullDev/BeerBot?label=License&logo=Creative%20Commons)](https://github.com/NullDev/BeerBot/blob/master/LICENSE) [![GitHub closed issues](https://img.shields.io/github/issues-closed-raw/NullDev/BeerBot?logo=Cachet)](https://github.com/NullDev/BeerBot/issues?q=is%3Aissue+is%3Aclosed)
 
 <p align="center"><img height="250" width="auto" src="/assets/icon.png" /></p>
 <p align="center"><b>Discord Bot to manage the members of an Austrian Discord Server</b></p>
@@ -20,23 +20,21 @@ Feature request or discovered a bug? Please [open an Issue](https://github.com/N
 ## :wrench: Setup
 
 0. Open up your favourite terminal (and navigate somewhere you want to download the repository to). <br><br>
-1. Make sure you have NodeJS installed (>= v20.0.0). Test by entering <br>
-$ `node -v` <br>
-If this returns a version number, NodeJS is installed. **If not**, get NodeJS <a href="https://nodejs.org/en/download/package-manager/">here</a>. <br><br>
+1. Make sure you have Bun installed (>= v20.0.0). Test by entering <br>
+$ `bun -v` <br>
+If this returns a version number, Bun is installed. **If not**, get Bun <a href="https://bun.sh/">here</a>. <br><br>
 2. Clone the repository and navigate to it. If you have Git installed, type <br>
 $ `git clone https://github.com/NullDev/BeerBot.git && cd BeerBot` <br>
 If not, download it <a href="https://github.com/NullDev/BeerBot/archive/master.zip">here</a> and extract the ZIP file.<br>
 Then navigate to the folder.<br><br>
 3. Install all dependencies by typing <br>
-$ `npm install`<br><br>
+$ `bun install`<br><br>
 4. Copy [config/config.template.js](https://github.com/NullDev/BeerBot/blob/master/config/config.template.js) and paste it as `config/config.custom.js` OR use `npm run generate-config`. <br><br>
 5. Configure it in your favourite editor by editing `config/config.custom.js`. <br><br>
 6. Start it in development mode by running <br>
-$ `npm start` <br>
+$ `bun start` <br>
 or start in production mode <br>
-$ `npm run start:prod` <br>
-or (recommended), use PM2 <br>
-$ `pm2 start pm2.ecosystem.json` <br><br>
+$ `bun run start:prod` <br><br>
 
 <hr>
 
