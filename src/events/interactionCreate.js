@@ -63,45 +63,40 @@ const handleButton = async function(interaction){
     else if (interaction.customId.startsWith("delete_data_")){
         const userId = interaction.customId.replace("delete_data_", "");
 
-        // Only allow users to delete their own data
         if (userId !== interaction.user.id){
             await interaction.reply({
-                content: "Du kannst nur deine eigenen Daten löschen.",
+                content: "Du konnst nur deine eigenen Daten löschen.",
                 flags: [MessageFlags.Ephemeral],
             });
             return;
         }
 
-        // Find the guild where the user is a member
         let {guild} = interaction;
         let member = null;
 
         if (!guild){
-            // If no guild in interaction (DM), find the guild where user is verified
             const verifiedGuilds = interaction.client.guilds.cache.filter(g => g.members.cache.has(userId));
 
             if (verifiedGuilds.size === 0){
                 await interaction.reply({
-                    content: "Du bist auf keinem Server, wo ich dich finden kann.",
+                    content: "Du bist auf kam Server, wo i di findn konn.",
                 });
                 return;
             }
 
-            // Use the first guild where the user is a member
             guild = verifiedGuilds.first();
         }
 
         member = await guild.members.fetch(userId).catch(() => null);
         if (!member){
             await interaction.reply({
-                content: "Benutzer nicht auf dem Server gefunden.",
+                content: "Benutzer ned aufm Server gfunden.",
             });
             return;
         }
 
-        // Show confirmation dialog
         const confirmation = await createYesNoInteraction(interaction, {
-            promptText: "⚠️ **Achtung!**\n\nBist du sicher, dass du alle deine Daten löschen möchtest?\n\n**Das wird:**\n• Alle deine Verifikationsrollen entfernen\n• Dein Geburtsdatum löschen\n• Deine Geburtstag-Ping Einstellung löschen\n• Du musst dich neu verifizieren\n\n**Diese Aktion kann nicht rückgängig gemacht werden!**",
+            promptText: "⚠️ **Achtung!**\n\nBist da sicher, dasst olle deine Daten löschen wüst?\n\n**Des wird:**\n• Alle deine Verifikationsrollen entfernen\n• Dei Geburtsdatum löschen\n• Deine Geburtstag-Ping Einstellung löschen\n• Du musst di neu verifizieren\n\n**Diese Aktion kann ned rückgängig gemacht werden!**",
             yesText: "Ja, alle Daten löschen",
             noText: "Abbrechen",
             yesStyle: "Danger",
@@ -114,23 +109,23 @@ const handleButton = async function(interaction){
 
             if (success){
                 await interaction.followUp({
-                    content: "✅ Alle deine Daten wurden erfolgreich gelöscht. Du kannst dich jederzeit neu verifizieren.",
+                    content: "✅ Alle deine Daten wurdn erfolgreich glöscht. Du konnst di jederzeit no amol verifizieren.",
                 });
             }
             else {
                 await interaction.followUp({
-                    content: "❌ Es ist ein Fehler beim Löschen deiner Daten aufgetreten. Bitte versuche es später erneut.",
+                    content: "❌ Es is a Fehler beim Löschen deiner Daten auftreten. Bitte versuachs später no amol.",
                 });
             }
         }
         else if (confirmation === "no"){
             await interaction.followUp({
-                content: "❌ Datenlöschung abgebrochen. Deine Daten bleiben unverändert.",
+                content: "❌ Datenlöschung abbrochen. Deine Daten bleiben unverändert.",
             });
         }
         else if (confirmation === "timeout"){
             await interaction.followUp({
-                content: "⏰ Zeitüberschreitung. Datenlöschung abgebrochen. Deine Daten bleiben unverändert.",
+                content: "⏰ Zeitüberschreitung. Datenlöschung abbrochen. Deine Daten bleiben unverändert.",
             });
         }
     }

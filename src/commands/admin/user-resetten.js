@@ -103,7 +103,7 @@ export default {
             );
 
             return await interaction.editReply({
-                content: `Benutzer ${targetUser} wurd erfolgreich zurückgesetzt. Alle Verifikationsdaten und Rollen wurden entfernt.`,
+                content: `Benutzer ${targetUser} wurd erfolgreich zurückgsetzt. Alle Verifikationsdaten und Rollen wurdn entfernt.`,
             });
         }
         catch (error){

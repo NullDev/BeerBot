@@ -12,7 +12,7 @@ const commandName = import.meta.url.split("/").pop()?.split(".").shift() ?? "";
 export default {
     data: new SlashCommandBuilder()
         .setName(commandName)
-        .setDescription("Zeigt dein gespeichertes Geburtsdatum an.")
+        .setDescription("Zeigt dei gspeichertes Geburtsdatum an.")
         .setContexts([InteractionContextType.Guild]),
     /**
      * @param {import("discord.js").CommandInteraction} interaction

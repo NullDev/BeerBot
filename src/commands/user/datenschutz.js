@@ -39,15 +39,12 @@ const deleteUserData = async function(user, member, client){
     const userId = user.id;
 
     try {
-        // Remove verified role
         if (config.roles.verified && member.roles.cache.has(config.roles.verified)){
             await member.roles.remove(config.roles.verified);
         }
 
-        // Remove all age roles
         await removeExistingAgeRoles(member);
 
-        // Delete all user data from database
         await db.delete(`user-${userId}.verified`);
         await db.delete(`user-${userId}.birthdate`);
         await db.delete(`user-${userId}.birthday_ping`);
@@ -57,10 +54,8 @@ const deleteUserData = async function(user, member, client){
         await db.delete(`user-${userId}.temp_birthdate`);
         await db.delete(`user-${userId}.temp_is_full_date`);
 
-        // Log success
         Log.done(`User ${user.displayName} has deleted their own data`);
 
-        // Log to guild
         await gLogger(
             { user, guild: member.guild, client },
             "🔷┃Data Deletion - User Request",
@@ -93,7 +88,6 @@ export default {
      */
     async execute(interaction){
         try {
-            // Check if user is verified
             const isVerified = await db.get(`user-${interaction.user.id}.verified`);
 
             const embed = new EmbedBuilder()
@@ -139,5 +133,4 @@ export default {
     },
 };
 
-// Export for button handler
 export { deleteUserData };
