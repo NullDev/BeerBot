@@ -58,7 +58,7 @@ export default {
                 { name: "\u200b", value: "\u200b", inline: true },
                 {
                     name: "Programmiersproch :wrench:",
-                    value: `NodeJS/Bun ${process.version}`,
+                    value: `NodeJS/Bun ${Bun.version}`,
                     inline: true,
                 },
                 {
