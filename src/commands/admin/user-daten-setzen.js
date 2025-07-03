@@ -77,7 +77,7 @@ export default {
         .setName(commandName)
         .setDescription("Setze den Geburtstag von am Benutzer manuell.")
         .setContexts([InteractionContextType.Guild])
-        .setDefaultMemberPermissions(PermissionFlagsBits.Administrator)
+        .setDefaultMemberPermissions(PermissionFlagsBits.ModerateMembers)
         .addUserOption(option =>
             option
                 .setName("user")

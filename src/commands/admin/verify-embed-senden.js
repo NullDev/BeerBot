@@ -22,7 +22,7 @@ export default {
         .setName(commandName)
         .setDescription("Sendet de Verifizierungsnachricht in an angegebene Channel (LÖSCHT DE ALTE NOCHRICHT A).")
         .setContexts([InteractionContextType.Guild])
-        .setDefaultMemberPermissions(PermissionFlagsBits.Administrator)
+        .setDefaultMemberPermissions(PermissionFlagsBits.ModerateMembers)
         .addStringOption((option) =>
             option.setName("channel")
                 .setDescription("Da Channel wos hingsendet werden sui")

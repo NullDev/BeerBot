@@ -23,7 +23,7 @@ export default {
         .setName(commandName)
         .setDescription("Resetet einen Benutzer (entfernt Verifikation und Rollen).")
         .setContexts([InteractionContextType.Guild])
-        .setDefaultMemberPermissions(PermissionFlagsBits.Administrator)
+        .setDefaultMemberPermissions(PermissionFlagsBits.ModerateMembers)
         .addUserOption((option) =>
             option.setName("user")
                 .setDescription("Der Benutzer der zurückgesetzt werden soll")

@@ -16,7 +16,7 @@ export default {
         .setName(commandName)
         .setDescription("Zagt die gespeicherten Verifikationsdaten von am Benutzer an.")
         .setContexts([InteractionContextType.Guild])
-        .setDefaultMemberPermissions(PermissionFlagsBits.Administrator)
+        .setDefaultMemberPermissions(PermissionFlagsBits.ModerateMembers)
         .addUserOption(option =>
             option
                 .setName("user")

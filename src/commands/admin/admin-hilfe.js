@@ -11,7 +11,7 @@ export default {
         .setName(commandName)
         .setDescription("Zeig a Übersicht von ollen Admin-Commands.")
         .setContexts([InteractionContextType.Guild])
-        .setDefaultMemberPermissions(PermissionFlagsBits.Administrator),
+        .setDefaultMemberPermissions(PermissionFlagsBits.ModerateMembers),
     /**
      * @param {import("discord.js").CommandInteraction} interaction
      */

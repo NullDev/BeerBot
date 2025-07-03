@@ -20,7 +20,7 @@ export default {
         .setName(commandName)
         .setDescription("Setz den Channel wo de Verifikationslogs gsendet werdn suin.")
         .setContexts([InteractionContextType.Guild])
-        .setDefaultMemberPermissions(PermissionFlagsBits.Administrator)
+        .setDefaultMemberPermissions(PermissionFlagsBits.ModerateMembers)
         .addStringOption((option) =>
             option.setName("channel")
                 .setDescription("Da Channel zum hinsendn")
