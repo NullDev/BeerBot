@@ -20,6 +20,8 @@ const commandRegister = async function(client){
     const commandFolders = await fs.readdir(foldersPath);
 
     for (const folder of commandFolders){
+        if (folder === "disabled") continue;
+
         const commandsPath = path.join(foldersPath, folder);
         const commandFiles = (await fs.readdir(commandsPath)).filter(file => file.endsWith(".js"));
 
