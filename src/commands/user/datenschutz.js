@@ -3,6 +3,7 @@ import { SlashCommandBuilder, InteractionContextType, MessageFlags, EmbedBuilder
 import { config } from "../../../config/config.js";
 import Log from "../../util/log.js";
 import gLogger from "../../service/gLogger.js";
+import { removeExistingAgeRoles } from "../../service/dmVerification/utils.js";
 
 // ========================= //
 // = Copyright (c) NullDev = //
@@ -11,21 +12,6 @@ import gLogger from "../../service/gLogger.js";
 const db = new BunDB("./data/guild_data.sqlite");
 
 const commandName = import.meta.url.split("/").pop()?.split(".").shift() ?? "";
-
-/**
- * Remove existing age roles from member
- *
- * @param {import("discord.js").GuildMember} member
- * @return {Promise<void>}
- */
-const removeExistingAgeRoles = async function(member){
-    const ageRoleIds = Object.values(config.roles.ages);
-    for (const roleId of ageRoleIds){
-        if (roleId && member.roles.cache.has(roleId)){
-            await member.roles.remove(roleId).catch(() => null);
-        }
-    }
-};
 
 /**
  * Delete all user data and remove roles
@@ -51,6 +37,7 @@ const deleteUserData = async function(user, member, client){
         await db.delete(`user-${userId}.verification_state`);
         await db.delete(`user-${userId}.verification_guild`);
         await db.delete(`user-${userId}.verification_timeout`);
+        await db.delete(`user-${userId}.gender`);
         await db.delete(`user-${userId}.temp_birthdate`);
         await db.delete(`user-${userId}.temp_is_full_date`);
 

@@ -8,6 +8,7 @@ import {
 import { config } from "../../../config/config.js";
 import Log from "../../util/log.js";
 import gLogger from "../../service/gLogger.js";
+import { removeExistingAgeRoles } from "../../service/dmVerification/utils.js";
 
 // ========================= //
 // = Copyright (c) NullDev = //
@@ -16,21 +17,6 @@ import gLogger from "../../service/gLogger.js";
 const db = new BunDB("./data/guild_data.sqlite");
 
 const commandName = import.meta.url.split("/").pop()?.split(".").shift() ?? "";
-
-/**
- * Remove existing age roles from member
- *
- * @param {import("discord.js").GuildMember} member
- * @return {Promise<void>}
- */
-const removeExistingAgeRoles = async function(member){
-    const ageRoleIds = Object.values(config.roles.ages);
-    for (const roleId of ageRoleIds){
-        if (roleId && member.roles.cache.has(roleId)){
-            await member.roles.remove(roleId).catch(() => null);
-        }
-    }
-};
 
 export default {
     data: new SlashCommandBuilder()

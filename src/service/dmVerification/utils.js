@@ -81,4 +81,11 @@ export const removeExistingAgeRoles = async function(member){
             await member.roles.remove(roleId).catch(() => null);
         }
     }
+
+    const genderRoleIds = Object.values(config.roles.gender);
+    for (const roleId of genderRoleIds){
+        if (roleId && member.roles.cache.has(roleId)){
+            await member.roles.remove(roleId).catch(() => null);
+        }
+    }
 };
