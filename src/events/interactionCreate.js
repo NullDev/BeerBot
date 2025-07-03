@@ -159,6 +159,9 @@ const handleButton = async function(interaction){
             });
         }
     }
+
+    else if (interaction.customId === "yes" || interaction.customId === "no") return null;
+
     return Log.warn(`Button interaction received but not handled: ${interaction.customId}`);
 };
 
