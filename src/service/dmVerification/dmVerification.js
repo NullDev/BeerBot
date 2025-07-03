@@ -41,7 +41,6 @@ const startDMVerification = async function(interaction){
             .setDescription("Servas! Willkommen zur Verifikation!\n\nI werd da jetzt a paar Frogn stelln.\n\n**Du kannst jederzeit mit `stopp` obbrechn.**\n\n-# Info: Du konnst deine Daten jederzeit einsehen und löschen mit dem `/datenschutz` Befehl am Server.\n-# Wonnst den Server verlosst, werdn de automatisch glöscht.")
             .setColor(13111086);
 
-        // Try to send DM first
         await interaction.user.send({
             embeds: [dmEmbed],
             files: [
@@ -52,15 +51,12 @@ const startDMVerification = async function(interaction){
             ],
         });
 
-        // If DM succeeds, set up verification state
         await db.set(`user-${interaction.user.id}.verification_state`, "waiting_birthday");
         await db.set(`user-${interaction.user.id}.verification_guild`, interaction.guildId);
         await db.set(`user-${interaction.user.id}.verification_timeout`, Date.now() + (5 * 60 * 1000)); // 5 minutes
 
-        // Send the birthday question first
         await askBirthdayQuestion(interaction.user);
 
-        // Then reply to interaction with success message
         if (interaction.deferred){
             await interaction.editReply({
                 content: "Schau in deine DMs!",
@@ -78,7 +74,6 @@ const startDMVerification = async function(interaction){
 
         const errorMessage = "I konn da ka Privatnachricht sendn. Stell bitte sicha, dasst a Privatnachrichten von Servermitgliedern akzeptierst.";
 
-        // Check if we already replied to the interaction
         if (interaction.deferred){
             await interaction.editReply({
                 content: errorMessage,
@@ -91,7 +86,6 @@ const startDMVerification = async function(interaction){
             });
         }
         else {
-            // If we already replied, use followUp
             await interaction.followUp({
                 content: errorMessage,
                 flags: [MessageFlags.Ephemeral],

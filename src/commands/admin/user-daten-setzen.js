@@ -111,6 +111,12 @@ export default {
      * @param {import("discord.js").CommandInteraction} interaction
      */
     async execute(interaction){
+        if (!interaction.deferred && !interaction.replied){
+            await interaction.deferReply({
+                flags: [MessageFlags.Ephemeral],
+            });
+        }
+
         try {
             const targetUser = interaction.options.getUser("user");
             const birthdate = interaction.options.getString("geburtstag");
@@ -119,10 +125,17 @@ export default {
 
             const member = await interaction.guild.members.fetch(targetUser.id).catch(() => null);
             if (!member){
-                await interaction.reply({
-                    content: "❌ Benutzer is ned aufm Server.",
-                    flags: [MessageFlags.Ephemeral],
-                });
+                if (interaction.deferred){
+                    await interaction.editReply({
+                        content: "❌ Benutzer is ned aufm Server.",
+                    });
+                }
+                else {
+                    await interaction.reply({
+                        content: "❌ Benutzer is ned aufm Server.",
+                        flags: [MessageFlags.Ephemeral],
+                    });
+                }
                 return;
             }
 
@@ -141,10 +154,17 @@ export default {
                     text: "Diese Aktion überschreibt olle bestehenden Verifikationsdaten!",
                 });
 
-            await interaction.reply({
-                embeds: [confirmEmbed],
-                flags: [MessageFlags.Ephemeral],
-            });
+            if (interaction.deferred){
+                await interaction.editReply({
+                    embeds: [confirmEmbed],
+                });
+            }
+            else {
+                await interaction.reply({
+                    embeds: [confirmEmbed],
+                    flags: [MessageFlags.Ephemeral],
+                });
+            }
 
             const success = await setUserBirthday(targetUser, member, birthdate, birthdayPing, gender);
 
@@ -168,10 +188,20 @@ export default {
         }
         catch (error){
             Log.error("Error in user-bday-setzen command:", error);
-            await interaction.reply({
-                content: "❌ Es is a Fehler auftreten. Bitte versuachs später no amol.",
-                flags: [MessageFlags.Ephemeral],
-            });
+
+            const errorMessage = "❌ Es is a Fehler auftreten. Bitte versuachs später no amol.";
+
+            if (interaction.deferred){
+                await interaction.editReply({
+                    content: errorMessage,
+                });
+            }
+            else {
+                await interaction.reply({
+                    content: errorMessage,
+                    flags: [MessageFlags.Ephemeral],
+                });
+            }
         }
     },
 };

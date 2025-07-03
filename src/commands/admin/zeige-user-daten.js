@@ -27,6 +27,12 @@ export default {
      * @param {import("discord.js").CommandInteraction} interaction
      */
     async execute(interaction){
+        if (!interaction.deferred && !interaction.replied){
+            await interaction.deferReply({
+                flags: [MessageFlags.Ephemeral],
+            });
+        }
+
         try {
             const targetUser = interaction.options.getUser("user");
             const userId = targetUser.id;
@@ -43,6 +49,11 @@ export default {
                     .setColor(15158332)
                     .setTimestamp();
 
+                if (interaction.deferred){
+                    return await interaction.editReply({
+                        embeds: [noDataEmbed],
+                    });
+                }
                 return await interaction.reply({
                     embeds: [noDataEmbed],
                     flags: [MessageFlags.Ephemeral],
@@ -74,6 +85,11 @@ export default {
                 .setThumbnail(targetUser.displayAvatarURL())
                 .setTimestamp();
 
+            if (interaction.deferred){
+                return await interaction.editReply({
+                    embeds: [userDataEmbed],
+                });
+            }
             return await interaction.reply({
                 embeds: [userDataEmbed],
                 flags: [MessageFlags.Ephemeral],
@@ -81,8 +97,16 @@ export default {
         }
         catch (error){
             Log.error("Error in zeige-user-daten command:", error);
+
+            const errorMessage = "❌ Es is a Fehler auftreten. Bitte versuachs später no amol.";
+
+            if (interaction.deferred){
+                return await interaction.editReply({
+                    content: errorMessage,
+                });
+            }
             return await interaction.reply({
-                content: "❌ Es is a Fehler auftreten. Bitte versuachs später no amol.",
+                content: errorMessage,
                 flags: [MessageFlags.Ephemeral],
             });
         }

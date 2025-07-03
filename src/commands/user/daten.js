@@ -14,11 +14,22 @@ export default {
      * @param {import("discord.js").CommandInteraction} interaction
      */
     async execute(interaction){
+        if (!interaction.deferred && !interaction.replied){
+            await interaction.deferReply({
+                flags: [MessageFlags.Ephemeral],
+            });
+        }
+
         const birthdate = await db.get(`user-${interaction.user.id}.birthdate`);
         const birthdayPing = await db.get(`user-${interaction.user.id}.birthday_ping`);
         const gender = await db.get(`user-${interaction.user.id}.gender`);
 
         if (!birthdate){
+            if (interaction.deferred){
+                return await interaction.editReply({
+                    content: "Du host no kane Daten gespeichert. Verifiziere di zuerst mit dem Button auf dem Server!",
+                });
+            }
             return await interaction.reply({
                 content: "Du host no kane Daten gespeichert. Verifiziere di zuerst mit dem Button auf dem Server!",
                 flags: [MessageFlags.Ephemeral],
@@ -33,8 +44,15 @@ export default {
         else if (gender === "female") genderText = "Weiblich";
         else if (gender === "divers") genderText = "Divers";
 
+        const responseContent = `**Deine Daten:**\n\n📅 **Geburtsdatum:** ${birthdate}\n🔎 **Typ:** ${dateType}\n🎂 **Geburtstag-Ping:** ${pingStatus}\n👤 **Geschlecht:** ${genderText}`;
+
+        if (interaction.deferred){
+            return await interaction.editReply({
+                content: responseContent,
+            });
+        }
         return await interaction.reply({
-            content: `**Deine Daten:**\n\n📅 **Geburtsdatum:** ${birthdate}\n🔎 **Typ:** ${dateType}\n🎂 **Geburtstag-Ping:** ${pingStatus}\n👤 **Geschlecht:** ${genderText}`,
+            content: responseContent,
             flags: [MessageFlags.Ephemeral],
         });
     },

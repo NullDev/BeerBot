@@ -74,6 +74,12 @@ export default {
      * @param {import("discord.js").CommandInteraction} interaction
      */
     async execute(interaction){
+        if (!interaction.deferred && !interaction.replied){
+            await interaction.deferReply({
+                flags: [MessageFlags.Ephemeral],
+            });
+        }
+
         try {
             const isVerified = await db.get(`user-${interaction.user.id}.verified`);
 
@@ -105,17 +111,34 @@ export default {
                 ],
             });
 
-            await interaction.reply({
-                content: "Schau in deine DMs für Datenschutz-Informationen!",
-                flags: [MessageFlags.Ephemeral],
-            });
+            if (interaction.deferred){
+                await interaction.editReply({
+                    content: "Schau in deine DMs für Datenschutz-Informationen!",
+                });
+            }
+            else {
+                await interaction.reply({
+                    content: "Schau in deine DMs für Datenschutz-Informationen!",
+                    flags: [MessageFlags.Ephemeral],
+                });
+            }
         }
         catch (error){
             Log.error(`Failed to send privacy info to user ${interaction.user.displayName}:`, error);
-            await interaction.reply({
-                content: "Ich konnte dir keine DM senden. Bitte stelle sicher, dass du DMs von Servermitgliedern akzeptierst.",
-                flags: [MessageFlags.Ephemeral],
-            });
+
+            const errorMessage = "Ich konnte dir keine DM senden. Bitte stelle sicher, dass du DMs von Servermitgliedern akzeptierst.";
+
+            if (interaction.deferred){
+                await interaction.editReply({
+                    content: errorMessage,
+                });
+            }
+            else {
+                await interaction.reply({
+                    content: errorMessage,
+                    flags: [MessageFlags.Ephemeral],
+                });
+            }
         }
     },
 };
