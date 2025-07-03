@@ -228,7 +228,7 @@ const handleDMVerification = async function(message){
 
         await db.set(`user-${userId}.verification_state`, "waiting_confirmation");
 
-        await message.reply(`**Sind de Daten korrekt? Sie kennan später NED mehr geändert werdn!**\n📅 ${date} - Alter: ${age} Jahre\n\nAntworte mit \`jo\` oder \`na\`.`);
+        await message.reply(`**Sand de Daten korrekt? Sie kennan später NED mehr geändert werdn!**\n📅 ${date} - Alter: ${age} Jahre${!isFullDate ? "\n\n-# Achtung. Du host nur des Jahr angegeben also konnst kan Geburtstagsping erhoitn" : ""}\n\nAntworte mit \`jo\` oder \`na\`.`);
     }
     else if (verificationState === "waiting_confirmation"){
         const confirmationAnswer = message.content.trim().toLowerCase();
