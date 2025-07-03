@@ -1,4 +1,4 @@
-# Staff Officer Monika
+# BeerBot
 [![NullDev/DiscordJS-Template](https://img.shields.io/badge/Template%3A-NullDev%2FDiscordJS--Template-green?style=flat-square&logo=github)](https://github.com/NullDev/DiscordJS-Template) [![License](https://img.shields.io/github/license/NullDev/BeerBot?label=License&logo=Creative%20Commons)](https://github.com/NullDev/BeerBot/blob/master/LICENSE) [![GitHub closed issues](https://img.shields.io/github/issues-closed-raw/NullDev/BeerBot?logo=Cachet)](https://github.com/NullDev/BeerBot/issues?q=is%3Aissue+is%3Aclosed)
 
 <p align="center"><img height="250" width="auto" src="/assets/icon.png" /></p>
@@ -7,7 +7,8 @@
 
 ## :question: What does it do?
 
-This is just a verification bot.
+This is just a verification bot. <br>
+I hob des an einem tog zomklatscht oiso schen is echt ned.
 
 <hr>
 
@@ -48,7 +49,10 @@ Once the config has been copied like described in [Step 4](#wrench-setup), it ca
 | discord: <br> `bot_status` | The bot status displayed on Discord. | String | N/A |
 | discord: <br> `bot_owner_ids` | OPTIONAL: Discord IDs of Bot owners | String-Array | [] |
 | roles: <br> `verified` | ID of the verified role | string | N/A |
+| roles: <br> `birthday` | ID of the bday role | string | N/A |
 | roles: <br> `ages` | Object of all ages roles | object | {} |
+| roles: <br> `gender` | Object of all gender roles | object | {} |
+| channels: <br> `general` | ID of the general chat to announce bdays | string | N/A |
 
 <hr>
 
