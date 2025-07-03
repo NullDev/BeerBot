@@ -92,7 +92,7 @@ export default {
 
             const embed = new EmbedBuilder()
                 .setTitle("🔒┃Datenschutz & Datenlöschung")
-                .setDescription("### Deine Daten bei uns\n\n**Was wir speichern:**\n• Dein Geburtsdatum (für Altersverifikation)\n• Deine Geburtstag-Ping Einstellung\n• Dein Verifikationsstatus\n\n**Automatische Löschung:**\n• Alle deine Daten werden automatisch gelöscht, wenn du den Server verlässt\n• Keine Daten werden an Dritte weitergegeben\n\n**Manuelle Löschung:**\n• Du kannst deine Daten jederzeit mit dem Button unten löschen\n• Dies entfernt auch alle Verifikationsrollen")
+                .setDescription("### Deine Daten bei uns\n\n**Was wir speichern:**\n• Dein Geburtsdatum (für Altersverifikation)\n• Deine Geburtstag-Ping Einstellung\n• Dein Geschlecht\n• Dein Verifikationsstatus\n\n**Automatische Löschung:**\n• Alle deine Daten werden automatisch gelöscht, wenn du den Server verlässt\n• Keine Daten werden an Dritte weitergegeben\n\n**Manuelle Löschung:**\n• Du kannst deine Daten jederzeit mit dem Button unten löschen\n• Dies entfernt auch alle Verifikationsrollen")
                 .setColor(13111086)
                 .setFooter({
                     text: "Deine Privatsphäre ist uns wichtig!",

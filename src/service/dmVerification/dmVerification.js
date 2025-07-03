@@ -4,7 +4,7 @@ import Log from "../../util/log.js";
 import gLogger from "../gLogger.js";
 import { config } from "../../../config/config.js";
 import { getAgeRole, calculateAge, removeExistingAgeRoles } from "./utils.js";
-import { askBirthdayQuestion, askBirthdayPingQuestion } from "./questions.js";
+import { askBirthdayQuestion, askBirthdayPingQuestion, askGenderQuestion } from "./questions.js";
 
 // ========================= //
 // = Copyright (c) NullDev = //
@@ -19,7 +19,6 @@ const db = new BunDB("./data/guild_data.sqlite");
  * @return {Promise<void>}
  */
 const startDMVerification = async function(interaction){
-    // Check if user is already verified
     const isVerified = await db.get(`user-${interaction.user.id}.verified`);
     if (isVerified){
         await interaction.reply({
@@ -30,7 +29,6 @@ const startDMVerification = async function(interaction){
     }
 
     try {
-        // Send DM to user
         const dmEmbed = new EmbedBuilder()
             .setTitle("🔷┃BundesBeer Verifikation")
             .setDescription("Servas! Willkommen zur Verifikation!\n\nI werd da jetzt a paar Frogn stelln.\n\n**Du kannst jederzeit mit `stopp` obbrechn.**\n\n-# Info: Du konnst deine Daten jederzeit einsehen und löschen mit dem `/datenschutz` Befehl am Server.\n-# Wonnst den Server verlosst, werdn de automatisch glöscht.")
@@ -46,18 +44,15 @@ const startDMVerification = async function(interaction){
             ],
         });
 
-        // Store verification state and start timeout
         await db.set(`user-${interaction.user.id}.verification_state`, "waiting_birthday");
         await db.set(`user-${interaction.user.id}.verification_guild`, interaction.guildId);
         await db.set(`user-${interaction.user.id}.verification_timeout`, Date.now() + (5 * 60 * 1000)); // 5 minutes
 
-        // Send ephemeral message to channel
         await interaction.reply({
             content: "Schau in deine DMs!",
             flags: [MessageFlags.Ephemeral],
         });
 
-        // Send first question
         await askBirthdayQuestion(interaction.user);
     }
     catch (error){
@@ -82,6 +77,8 @@ const cleanupVerification = async function(userId){
     await db.delete(`user-${userId}.temp_birthdate`);
     await db.delete(`user-${userId}.temp_is_full_date`);
     await db.delete(`user-${userId}.temp_age`);
+    await db.delete(`user-${userId}.temp_birthday_ping`);
+    await db.delete(`user-${userId}.temp_gender`);
 };
 
 /**
@@ -98,47 +95,51 @@ const completeVerification = async function(user, member, shouldAddRole, client)
     const birthdate = await db.get(`user-${userId}.temp_birthdate`);
     const age = calculateAge(birthdate);
     const ageRoleId = getAgeRole(age);
+    const gender = await db.get(`user-${userId}.temp_gender`);
 
     try {
-        // Remove existing age roles
         await removeExistingAgeRoles(member);
 
-        // Add verified role
         if (config.roles.verified){
             await member.roles.add(config.roles.verified);
         }
 
-        // Add age role
         if (ageRoleId){
             await member.roles.add(ageRoleId);
         }
 
-        // Store user data in database
+        if (gender && config.roles.gender[gender]){
+            await member.roles.add(config.roles.gender[gender]);
+        }
+
         await db.set(`user-${userId}.verified`, true);
         await db.set(`user-${userId}.birthdate`, birthdate);
         await db.set(`user-${userId}.birthday_ping`, shouldAddRole);
+        if (gender){
+            await db.set(`user-${userId}.gender`, gender);
+        }
 
-        // Clean up temporary data
         await cleanupVerification(userId);
 
-        // Log success
-        Log.done(`User ${user.displayName} has been verified via DM. Age: ${age}, Birthday ping: ${shouldAddRole}`);
+        Log.done(`User ${user.displayName} has been verified via DM. Age: ${age}, Birthday ping: ${shouldAddRole}, Gender: ${gender}`);
 
-        // Send success message to user
+        let genderText = "Nicht angegeben";
+        if (gender === "male") genderText = "Männlich";
+        else if (gender === "female") genderText = "Weiblich";
+        else if (gender === "divers") genderText = "Divers";
         const successEmbed = new EmbedBuilder()
             .setTitle("✅┃Verifikation erfolgreich!")
-            .setDescription(`Du wurdest erfolgreich verifiziert!\n\n**Alter:** ${age} Jahre\n**Geburtstag Ping:** ${shouldAddRole ? "Jo" : "Na"}\n\nDu konnst jetzt olle Kanäle aufm Server sehen.`)
+            .setDescription(`Du wurdest erfolgreich verifiziert!\n\n**Alter:** ${age} Jahre\n**Geschlecht:** ${genderText}\n**Geburtstag Ping:** ${shouldAddRole ? "Jo" : "Na"}\n\nDu konnst jetzt olle Kanäle aufm Server sehen.`)
             .setColor(13111086);
 
         await user.send({
             embeds: [successEmbed],
         });
 
-        // Log to guild
         await gLogger(
             { user, guild: member.guild, client },
             "🔷┃Verification Log - Erfolg",
-            `Benutzer ${user} wurde erfolgreich verifiziert.\nAlter: ${age}\nGeburtstag Ping: ${shouldAddRole ? "Jo" : "Na"}`,
+            `Benutzer ${user} wurde erfolgreich verifiziert.\nAlter: ${age}\nGeschlecht: ${genderText}\nGeburtstag Ping: ${shouldAddRole ? "Jo" : "Na"}`,
         );
     }
     catch (error){
@@ -171,14 +172,12 @@ const handleDMVerification = async function(message){
 
     if (!verificationState || !guildId) return;
 
-    // Check timeout
     if (timeout && Date.now() > timeout){
         await message.reply("⏰ Die Verifikation is obglaufn. Bitte starts no amol mitm Button aufm Server.");
         await cleanupVerification(userId);
         return;
     }
 
-    // Check for abort
     const content = message.content.trim().toLowerCase();
     if (content === "stopp"){
         await message.reply("❌ Verifikation obbrochn. Du konnst jederzeit mitm Button aufm Server neich starten.");
@@ -200,7 +199,6 @@ const handleDMVerification = async function(message){
         return;
     }
 
-    // Reset timeout
     await db.set(`user-${userId}.verification_timeout`, Date.now() + (5 * 60 * 1000));
 
     if (verificationState === "waiting_birthday"){
@@ -222,18 +220,14 @@ const handleDMVerification = async function(message){
             return;
         }
 
-        // Check if it's a full date (has day and month)
         const isFullDate = /^\d{1,2}\.\d{1,2}\.\d{4}$/.test(date);
 
-        // Store birthdate and age for confirmation
         await db.set(`user-${userId}.temp_birthdate`, date);
         await db.set(`user-${userId}.temp_is_full_date`, isFullDate);
         await db.set(`user-${userId}.temp_age`, age);
 
-        // Move to confirmation state
         await db.set(`user-${userId}.verification_state`, "waiting_confirmation");
 
-        // Send confirmation message
         await message.reply(`**Sind de Daten korrekt? Sie kennan später NED mehr geändert werdn!**\n📅 ${date} - Alter: ${age} Jahre\n\nAntworte mit \`jo\` oder \`na\`.`);
     }
     else if (verificationState === "waiting_confirmation"){
@@ -245,40 +239,133 @@ const handleDMVerification = async function(message){
         }
 
         if (confirmationAnswer === "na"){
-            // User said no, go back to birthday question
             await db.set(`user-${userId}.verification_state`, "waiting_birthday");
             await message.reply("❌ Okay, bitte gib dein Geburtsdatum no amol ein.");
             await askBirthdayQuestion(message.author);
             return;
         }
 
-        // User confirmed, proceed based on date type
         const isFullDate = await db.get(`user-${userId}.temp_is_full_date`);
 
         if (isFullDate){
-            // Move to ping question
             await db.set(`user-${userId}.verification_state`, "waiting_ping");
             await message.reply("✅ Geburtsdatum bestätigt!");
             await askBirthdayPingQuestion(message.author);
         }
         else {
-            // Complete verification without ping question
+            await db.set(`user-${userId}.temp_birthday_ping`, false);
+            await db.set(`user-${userId}.verification_state`, "waiting_gender");
             await message.reply("✅ Geburtsdatum bestätigt! (Nur Jahr - keine Geburtstag-Pings möglich. Du konnst des später mit `/geburtstagsping` no hinzufügen)");
-            await completeVerification(message.author, member, false, message.client);
+            await askGenderQuestion(message.author);
         }
     }
     else if (verificationState === "waiting_ping"){
-        const pingAnswer = message.content.trim().toLowerCase();
-        const shouldAddRole = pingAnswer === "jo";
-
-        if (pingAnswer !== "jo" && pingAnswer !== "na"){
-            await message.reply("❌ Bitte antwort mit `jo` oder `na`.");
-            return;
-        }
-
-        // Complete verification
-        await completeVerification(message.author, member, shouldAddRole, message.client);
+        await message.reply("❌ Bitte verwende die Buttons in der vorherigen Nachricht, um deine Entscheidung zu treffen.");
+        return;
     }
 };
 
-export { startDMVerification, handleDMVerification };
+/**
+ * Handle birthday ping button interaction
+ *
+ * @param {import("discord.js").ButtonInteraction} interaction
+ * @return {Promise<void>}
+ */
+const handleBirthdayPingButton = async function(interaction){
+    const userId = interaction.user.id;
+    const verificationState = await db.get(`user-${userId}.verification_state`);
+    const guildId = await db.get(`user-${userId}.verification_guild`);
+
+    if (!verificationState || !guildId || verificationState !== "waiting_ping"){
+        await interaction.reply({
+            content: "❌ Du bist ned in der Verifikation oder der falsche Schritt.",
+            flags: [MessageFlags.Ephemeral],
+        });
+        return;
+    }
+
+    const guild = interaction.client.guilds.cache.get(guildId);
+    if (!guild){
+        await interaction.reply({
+            content: "❌ Fehler: Server ned gfunden. Bitte versuachs no amol.",
+            flags: [MessageFlags.Ephemeral],
+        });
+        await cleanupVerification(userId);
+        return;
+    }
+
+    const member = await guild.members.fetch(userId).catch(() => null);
+    if (!member){
+        await interaction.reply({
+            content: "❌ Fehler: Du bist ned mehr aufm Server. Bitte tritt dem Server erneut bei.",
+            flags: [MessageFlags.Ephemeral],
+        });
+        await cleanupVerification(userId);
+        return;
+    }
+
+    const shouldAddRole = interaction.customId === "birthday_ping_yes";
+
+    await db.set(`user-${userId}.temp_birthday_ping`, shouldAddRole);
+
+    await interaction.update({
+        components: [],
+    });
+
+    await db.set(`user-${userId}.verification_state`, "waiting_gender");
+
+    await askGenderQuestion(interaction.user);
+};
+
+/**
+ * Handle gender selection interaction
+ *
+ * @param {import("discord.js").StringSelectMenuInteraction} interaction
+ * @return {Promise<void>}
+ */
+const handleGenderSelection = async function(interaction){
+    const userId = interaction.user.id;
+    const verificationState = await db.get(`user-${userId}.verification_state`);
+    const guildId = await db.get(`user-${userId}.verification_guild`);
+
+    if (!verificationState || !guildId || verificationState !== "waiting_gender"){
+        await interaction.reply({
+            content: "❌ Du bist ned in der Verifikation oder der falsche Schritt.",
+            flags: [MessageFlags.Ephemeral],
+        });
+        return;
+    }
+
+    const guild = interaction.client.guilds.cache.get(guildId);
+    if (!guild){
+        await interaction.reply({
+            content: "❌ Fehler: Server ned gfunden. Bitte versuachs no amol.",
+            flags: [MessageFlags.Ephemeral],
+        });
+        await cleanupVerification(userId);
+        return;
+    }
+
+    const member = await guild.members.fetch(userId).catch(() => null);
+    if (!member){
+        await interaction.reply({
+            content: "❌ Fehler: Du bist ned mehr aufm Server. Bitte tritt dem Server erneut bei.",
+            flags: [MessageFlags.Ephemeral],
+        });
+        await cleanupVerification(userId);
+        return;
+    }
+
+    const selectedGender = interaction.values[0];
+    const birthdayPing = await db.get(`user-${userId}.temp_birthday_ping`);
+
+    await db.set(`user-${userId}.temp_gender`, selectedGender);
+
+    await interaction.update({
+        components: [],
+    });
+
+    await completeVerification(interaction.user, member, birthdayPing, interaction.client);
+};
+
+export { startDMVerification, handleDMVerification, handleBirthdayPingButton, handleGenderSelection };

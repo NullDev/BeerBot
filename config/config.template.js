@@ -14,6 +14,11 @@ export default {
             "36_39": "",
             "40+": "",
         },
+        gender: {
+            male: "",
+            female: "",
+            divers: "",
+        },
     },
     channels: {
         general: "",

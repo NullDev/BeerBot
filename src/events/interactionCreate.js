@@ -1,6 +1,6 @@
 import { BunDB } from "bun.db";
 import { MessageFlags } from "discord.js";
-import { startDMVerification } from "../service/dmVerification/dmVerification.js";
+import { startDMVerification, handleBirthdayPingButton, handleGenderSelection } from "../service/dmVerification/dmVerification.js";
 import { deleteUserData } from "../commands/user/datenschutz.js";
 import createYesNoInteraction from "./yesNoInteraction.js";
 import Log from "../util/log.js";
@@ -60,6 +60,9 @@ const handleButton = async function(interaction){
     if (interaction.customId === "verify"){
         await startDMVerification(interaction);
     }
+    else if (interaction.customId === "birthday_ping_yes" || interaction.customId === "birthday_ping_no"){
+        await handleBirthdayPingButton(interaction);
+    }
     else if (interaction.customId.startsWith("delete_data_")){
         const userId = interaction.customId.replace("delete_data_", "");
 
@@ -97,7 +100,7 @@ const handleButton = async function(interaction){
 
         const confirmation = await createYesNoInteraction(interaction, {
             promptText: "⚠️ **Achtung!**\n\nBist da sicher, dasst olle deine Daten löschen wüst?\n\n**Des wird:**\n• Alle deine Verifikationsrollen entfernen\n• Dei Geburtsdatum löschen\n• Deine Geburtstag-Ping Einstellung löschen\n• Du musst di neu verifizieren\n\n**Diese Aktion kann ned rückgängig gemacht werden!**",
-            yesText: "Ja, alle Daten löschen",
+            yesText: "Jo, alle Daten löschen",
             noText: "Abbrechen",
             yesStyle: "Danger",
             noStyle: "Secondary",
@@ -132,6 +135,27 @@ const handleButton = async function(interaction){
 };
 
 /**
+ * Handle modal submit events
+ *
+ * @param {import("discord.js").ModalSubmitInteraction} interaction
+ */
+const handleModalSubmit = async function(interaction){
+    // Currently no modal submissions are handled
+    Log.warn(`Modal submit interaction received but not handled: ${interaction.customId}`);
+};
+
+/**
+ * Handle string select menu events
+ *
+ * @param {import("discord.js").StringSelectMenuInteraction} interaction
+ */
+const handleStringSelectMenu = async function(interaction){
+    if (interaction.customId === "gender_selection"){
+        await handleGenderSelection(interaction);
+    }
+};
+
+/**
  * Handle interactionCreate event
  *
  * @param {import("discord.js").Interaction} interaction
@@ -141,6 +165,7 @@ const interactionCreateHandler = async function(interaction){
     if (interaction.isChatInputCommand()) await handleCommandInteraction(interaction);
     if (interaction.isModalSubmit()) await handleModalSubmit(interaction);
     if (interaction.isButton()) await handleButton(interaction);
+    if (interaction.isStringSelectMenu()) await handleStringSelectMenu(interaction);
 };
 
 export default interactionCreateHandler;
