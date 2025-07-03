@@ -25,8 +25,7 @@ If applicable, add screenshots to help explain your problem.
 
 **Developers only: **
  - OS: [e.g. Ubuntu 22.04]
- - NodeJS Version [e.g. 19.0.2]
- - NPM Version [e.g. 8.19.2]
+ - Bun Version [e.g. 1.2.17]
 
 **Additional context**
 Add any other context about the problem here.
