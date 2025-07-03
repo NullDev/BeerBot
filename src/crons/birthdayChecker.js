@@ -51,9 +51,6 @@ class BirthdayChecker {
                 Log.wait(`[CRON] Checking birthdays in guild: ${guild.name} (${guildId})`);
 
                 const allData = await db.all();
-
-                Log.debug(`[CRON] All database entries: ${allData.map(item => `${item.id}=${JSON.stringify(item.value)}`).join(", ")}`);
-
                 const userEntries = allData.filter(item => item.id.startsWith("user-"));
                 const verifiedUsers = [];
 
