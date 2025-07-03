@@ -20,9 +20,10 @@ const commandName = import.meta.url.split("/").pop()?.split(".").shift() ?? "";
  * @param {import("discord.js").GuildMember} member
  * @param {string} birthdate
  * @param {boolean} birthdayPing
+ * @param {string} gender
  * @return {Promise<boolean>}
  */
-const setUserBirthday = async function(user, member, birthdate, birthdayPing){
+const setUserBirthday = async function(user, member, birthdate, birthdayPing, gender){
     const userId = user.id;
     const age = calculateAge(birthdate);
     const ageRoleId = getAgeRole(age);
@@ -40,16 +41,19 @@ const setUserBirthday = async function(user, member, birthdate, birthdayPing){
 
         if (ageRoleId) await member.roles.add(ageRoleId);
 
+        if (gender && config.roles.gender[gender] && !member.roles.cache.has(config.roles.gender[gender])) await member.roles.add(config.roles.gender[gender]);
+
         await db.set(`user-${userId}.verified`, true);
         await db.set(`user-${userId}.birthdate`, birthdate);
         await db.set(`user-${userId}.birthday_ping`, birthdayPing);
+        await db.set(`user-${userId}.gender`, gender);
 
-        Log.done(`Admin set birthday for user ${user.displayName}: ${birthdate} (Age: ${age}, Ping: ${birthdayPing})`);
+        Log.done(`Admin set birthday for user ${user.displayName}: ${birthdate} (Age: ${age}, Ping: ${birthdayPing}, Gender: ${gender})`);
 
         await gLogger(
             { user, guild: member.guild, client: member.client },
             "🔷┃Admin Action - Birthday Set",
-            `Admin hat Geburtstag für ${user} gesetzt.\nGeburtsdatum: ${birthdate}\nAlter: ${age}\nGeburtstag Ping: ${birthdayPing ? "Jo" : "Na"}`,
+            `Admin hat Geburtstag für ${user} gesetzt.\nGeburtsdatum: ${birthdate}\nAlter: ${age}\nGeburtstag Ping: ${birthdayPing ? "Jo" : "Na"}\nGeschlecht: ${gender}`,
         );
 
         return true;
@@ -86,6 +90,17 @@ export default {
                 .setDescription("Geburtsdatum (JJJJ oder TT.MM.JJJJ)")
                 .setRequired(true),
         )
+        .addStringOption(option =>
+            option
+                .setName("gender")
+                .setDescription("Geschlecht (male, female, divers)")
+                .setRequired(true)
+                .addChoices(
+                    { name: "Männlich", value: "male" },
+                    { name: "Weiblich", value: "female" },
+                    { name: "Divers", value: "divers" },
+                ),
+        )
         .addBooleanOption(option =>
             option
                 .setName("geburtstag_ping")
@@ -99,6 +114,7 @@ export default {
         try {
             const targetUser = interaction.options.getUser("user");
             const birthdate = interaction.options.getString("geburtstag");
+            const gender = interaction.options.getString("gender");
             const birthdayPing = interaction.options.getBoolean("geburtstag_ping") ?? false;
 
             const member = await interaction.guild.members.fetch(targetUser.id).catch(() => null);
@@ -114,8 +130,8 @@ export default {
             const currentBirthdate = await db.get(`user-${targetUser.id}.birthdate`);
 
             const confirmEmbed = new EmbedBuilder()
-                .setTitle("🔷┃Geburtstag setzen")
-                .setDescription(`**Benutzer:** ${targetUser}\n**Geburtsdatum:** ${birthdate}\n**Geburtstag Ping:** ${birthdayPing ? "Jo" : "Na"}`)
+                .setTitle("🔷┃Daten setzen")
+                .setDescription(`**Benutzer:** ${targetUser}\n**Geburtsdatum:** ${birthdate}\n**Geschlecht:** ${gender}\n**Geburtstag Ping:** ${birthdayPing ? "Jo" : "Na"}`)
                 .addFields(
                     { name: "Aktueller Status", value: isVerified ? "✅ Verifiziert" : "❌ Nicht verifiziert", inline: true },
                     { name: "Aktuelles Geburtsdatum", value: currentBirthdate || "Nicht gesetzt", inline: true },
@@ -130,12 +146,12 @@ export default {
                 flags: [MessageFlags.Ephemeral],
             });
 
-            const success = await setUserBirthday(targetUser, member, birthdate, birthdayPing);
+            const success = await setUserBirthday(targetUser, member, birthdate, birthdayPing, gender);
 
             if (success){
                 const successEmbed = new EmbedBuilder()
-                    .setTitle("✅┃Geburtstag erfolgreich gesetzt")
-                    .setDescription(`Der Geburtstag von ${targetUser} wurd erfolgreich gsetzt.\n\n**Geburtsdatum:** ${birthdate}\n**Alter:** ${calculateAge(birthdate)} Jahre\n**Geburtstag Ping:** ${birthdayPing ? "Jo" : "Na"}`)
+                    .setTitle("✅┃Daten erfolgreich gesetzt")
+                    .setDescription(`Die Daten von ${targetUser} wurd erfolgreich gsetzt.\n\n**Geburtsdatum:** ${birthdate}\n**Alter:** ${calculateAge(birthdate)} Jahre\n**Geschlecht:** ${gender}\n**Geburtstag Ping:** ${birthdayPing ? "Jo" : "Na"}`)
                     .setColor(13111086);
 
                 await interaction.followUp({
@@ -145,7 +161,7 @@ export default {
             }
             else {
                 await interaction.followUp({
-                    content: "❌ Es is a Fehler beim Setzen des Geburtstags auftreten. Bitte überprüfe de Eingabe und versuachs no amol.",
+                    content: "❌ Es is a Fehler beim Setzen der Daten auftreten. Bitte überprüfe de Eingabe und versuachs no amol.",
                     flags: [MessageFlags.Ephemeral],
                 });
             }

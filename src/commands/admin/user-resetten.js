@@ -86,6 +86,7 @@ export default {
             await db.delete(`user-${targetUser.id}.verified`);
             await db.delete(`user-${targetUser.id}.birthdate`);
             await db.delete(`user-${targetUser.id}.birthday_ping`);
+            await db.delete(`user-${targetUser.id}.gender`);
             await db.delete(`user-${targetUser.id}.verification_state`);
             await db.delete(`user-${targetUser.id}.verification_guild`);
             await db.delete(`user-${targetUser.id}.verification_timeout`);
