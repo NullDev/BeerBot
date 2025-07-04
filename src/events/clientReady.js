@@ -4,6 +4,7 @@ import scheduleCrons from "../service/cronScheduler.js";
 import interactionCreateHandler from "./interactionCreate.js";
 import messageCreateHandler from "./messageCreate.js";
 import guildMemberAddHandler from "./guildMemberAdd.js";
+import guildMemberRemoveHandler from "./guildMemberRemove.js";
 import setStatus from "../util/setStatus.js";
 import Log from "../util/log.js";
 
@@ -26,6 +27,7 @@ const clientReady = async function(client){
             client.on(Events.InteractionCreate, async interaction => interactionCreateHandler(interaction));
             client.on(Events.MessageCreate, async message => messageCreateHandler(message));
             client.on(Events.GuildMemberAdd, async member => guildMemberAddHandler(member));
+            client.on(Events.GuildMemberRemove, async member => guildMemberRemoveHandler(member));
         });
 
     await scheduleCrons(client);

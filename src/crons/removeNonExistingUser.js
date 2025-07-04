@@ -48,6 +48,12 @@ class UserCleanupHandler {
                             await db.delete(`user-${userId}.verified`);
                             await db.delete(`user-${userId}.birthdate`);
                             await db.delete(`user-${userId}.birthday_ping`);
+                            await db.delete(`user-${userId}.gender`);
+                            await db.delete(`user-${userId}.verification_state`);
+                            await db.delete(`user-${userId}.verification_guild`);
+                            await db.delete(`user-${userId}.verification_timeout`);
+                            await db.delete(`user-${userId}.temp_birthdate`);
+                            await db.delete(`user-${userId}.temp_is_full_date`);
 
                             Log.done(`[CRON] Removed user ${userId} from guild ${guild.name} - user no longer exists`);
                             removedUsers++;
