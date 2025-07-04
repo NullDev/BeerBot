@@ -22,7 +22,7 @@ export default {
         }
 
         const userCommands = /** @type {import("../../service/client.js").default} */ (interaction.client)
-            .commands.filter(cmd => cmd.data.default_member_permissions !== "8");
+            .commands.filter(cmd => !cmd.data.default_member_permissions);
 
         const str = await Promise.all(userCommands.map(async(cmd) => `**/${cmd.data.name}** - ${cmd.data.description}`));
 
