@@ -133,6 +133,7 @@ const completeVerification = async function(user, member, shouldAddRole, client)
     const age = calculateAge(birthdate);
     const ageRoleId = getAgeRole(age);
     const gender = await db.get(`user-${userId}.temp_gender`);
+    const isFullDate = await db.get(`user-${userId}.temp_is_full_date`);
 
     try {
         await removeExistingAgeRoles(member);
@@ -162,7 +163,8 @@ const completeVerification = async function(user, member, shouldAddRole, client)
 
         await cleanupVerification(userId);
 
-        Log.done(`User ${user.displayName} has been verified via DM. Age: ${age}, Birthday ping: ${shouldAddRole}, Gender: ${gender}`);
+        const dateType = isFullDate ? "Vollständiges Datum" : "Nur Jahr";
+        Log.done(`User ${user.displayName} has been verified via DM. Age: ${age}, Birthday ping: ${shouldAddRole}, Gender: ${gender}, Date type: ${dateType}`);
 
         let genderText = "Nicht angegeben";
         if (gender === "male") genderText = "Männlich";
@@ -180,7 +182,7 @@ const completeVerification = async function(user, member, shouldAddRole, client)
         await gLogger(
             { user, guild: member.guild, client },
             "🔷┃Verification Log - Erfolg",
-            `Benutzer ${user} wurde erfolgreich verifiziert.\nAlter: ${age}\nGeschlecht: ${genderText}\nGeburtstag Ping: ${shouldAddRole ? "Jo" : "Na"}`,
+            `Benutzer ${user} wurde erfolgreich verifiziert.\nAlter: ${age}\nGeschlecht: ${genderText}\nGeburtstag Ping: ${shouldAddRole ? "Jo" : "Na"}\nDatumstyp: ${dateType}`,
         );
     }
     catch (error){
