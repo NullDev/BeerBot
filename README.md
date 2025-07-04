@@ -30,7 +30,7 @@ If not, download it <a href="https://github.com/NullDev/BeerBot/archive/master.z
 Then navigate to the folder.<br><br>
 3. Install all dependencies by typing <br>
 $ `bun install`<br><br>
-4. Copy [config/config.template.js](https://github.com/NullDev/BeerBot/blob/master/config/config.template.js) and paste it as `config/config.custom.js` OR use `npm run generate-config`. <br><br>
+4. Copy [config/config.template.js](https://github.com/NullDev/BeerBot/blob/master/config/config.template.js) and paste it as `config/config.custom.js` OR use `bun run generate-config`. <br><br>
 5. Configure it in your favourite editor by editing `config/config.custom.js`. <br><br>
 6. Start it in development mode by running <br>
 $ `bun start` <br>
@@ -46,9 +46,9 @@ Once the config has been copied like described in [Step 4](#wrench-setup), it ca
 | Config Key | Description | Data Type | Default value |
 | ---------- | --------- | ------------------ | ------------ |
 | discord: <br> `bot_token` | Auth Token of the Discord bot. Can be created [here](https://discordapp.com/developers/). | String | N/A |
-| discord: <br> `bot_status` | The bot status displayed on Discord. | String | N/A |
 | discord: <br> `bot_owner_ids` | OPTIONAL: Discord IDs of Bot owners | String-Array | [] |
 | roles: <br> `verified` | ID of the verified role | string | N/A |
+| roles: <br> `unverified` | ID of the verified role | string | N/A |
 | roles: <br> `birthday` | ID of the bday role | string | N/A |
 | roles: <br> `ages` | Object of all ages roles | object | {} |
 | roles: <br> `gender` | Object of all gender roles | object | {} |
