@@ -1,9 +1,10 @@
-import { ActivityType, Events } from "discord.js";
+import { Events } from "discord.js";
 import registerCommands from "../service/commandRegister.js";
 import scheduleCrons from "../service/cronScheduler.js";
 import interactionCreateHandler from "./interactionCreate.js";
 import messageCreateHandler from "./messageCreate.js";
 import guildMemberAddHandler from "./guildMemberAdd.js";
+import setStatus from "../util/setStatus.js";
 import Log from "../util/log.js";
 
 // ========================= //
@@ -30,8 +31,7 @@ const clientReady = async function(client){
     await scheduleCrons(client);
 
     const count = client.guilds.cache.reduce((acc, guild) => acc + (guild.memberCount || 0), 0);
-    client.user?.setActivity({ name: `Säuft Bier für ${count} Mitglieder.`, type: ActivityType.Playing });
-    client.user?.setStatus("online");
+    await setStatus(client, count);
 };
 
 export default clientReady;

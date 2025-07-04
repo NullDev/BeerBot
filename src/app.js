@@ -6,6 +6,7 @@ import Log from "./util/log.js";
 import { config, meta } from "../config/config.js";
 import DiscordClient from "./service/client.js";
 import clientReady from "./events/clientReady.js";
+import shardReady from "./events/shardReady.js";
 
 // ========================= //
 // = Copyright (c) NullDev = //
@@ -60,7 +61,7 @@ else Log.done("Data dir exists!");
 
 client.on(Events.ClientReady, async() => clientReady(client));
 
-client.on(Events.ShardReady, async shard => Log.info(`Shard ${shard} is ready!`));
+client.on(Events.ShardReady, async shard => shardReady(client, shard));
 
 client.on(Events.ShardError, (error, shardId) => Log.error(`Shard ${shardId} encountered an error:`, error));
 
