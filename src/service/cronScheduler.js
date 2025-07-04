@@ -3,6 +3,7 @@ import Log from "../util/log.js";
 import LogHandler from "../crons/removeOldLogs.js";
 import UserCleanupHandler from "../crons/removeNonExistingUser.js";
 import BirthdayChecker from "../crons/birthdayChecker.js";
+import { config } from "../../config/config.js";
 
 // ========================= //
 // = Copyright (c) NullDev = //
@@ -29,6 +30,16 @@ const scheduleCrons = async function(client){
     // hourly cron
     cron.schedule("0 * * * *", async() => {
         await UserCleanupHandler.removeNonExistingUsers(client);
+    });
+
+    // every day at 13:37
+    cron.schedule("37 13 * * *", async() => {
+        const generalChatId  = config.channels.general;
+
+        const channel = await client.channels.fetch(generalChatId);
+        if (!channel) return;
+
+        await channel.send("Leitln, bleibts hydriert und trinkts a Bier! Prost 🍺");
     });
 
     const cronCount = cron.getTasks().size;
