@@ -31,6 +31,10 @@ const deleteUserData = async function(user, member, client){
 
         await removeExistingAgeRoles(member);
 
+        if (config.roles.unverified && !member.roles.cache.has(config.roles.unverified)){
+            await member.roles.add(config.roles.unverified);
+        }
+
         await db.delete(`user-${userId}.verified`);
         await db.delete(`user-${userId}.birthdate`);
         await db.delete(`user-${userId}.birthday_ping`);

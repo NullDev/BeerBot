@@ -3,6 +3,7 @@ import registerCommands from "../service/commandRegister.js";
 import scheduleCrons from "../service/cronScheduler.js";
 import interactionCreateHandler from "./interactionCreate.js";
 import messageCreateHandler from "./messageCreate.js";
+import guildMemberAddHandler from "./guildMemberAdd.js";
 import Log from "../util/log.js";
 
 // ========================= //
@@ -23,6 +24,7 @@ const clientReady = async function(client){
         .then(() => {
             client.on(Events.InteractionCreate, async interaction => interactionCreateHandler(interaction));
             client.on(Events.MessageCreate, async message => messageCreateHandler(message));
+            client.on(Events.GuildMemberAdd, async member => guildMemberAddHandler(member));
         });
 
     await scheduleCrons(client);

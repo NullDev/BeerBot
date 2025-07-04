@@ -37,6 +37,10 @@ const setUserBirthday = async function(user, member, birthdate, birthdayPing, ge
 
         await removeExistingAgeRoles(member);
 
+        if (config.roles.unverified && member.roles.cache.has(config.roles.unverified)){
+            await member.roles.remove(config.roles.unverified);
+        }
+
         if (config.roles.verified && !member.roles.cache.has(config.roles.verified)) await member.roles.add(config.roles.verified);
 
         if (ageRoleId) await member.roles.add(ageRoleId);

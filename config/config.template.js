@@ -6,6 +6,7 @@ export default {
     roles: {
         verified: "",
         birthday: "",
+        unverified: "",
         ages: {
             "14_17": "",
             "18_24": "",

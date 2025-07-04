@@ -98,9 +98,10 @@ const startDMVerification = async function(interaction){
  * Clean up verification data
  *
  * @param {string} userId
+ * @param {import("discord.js").GuildMember} [member]
  * @return {Promise<void>}
  */
-const cleanupVerification = async function(userId){
+const cleanupVerification = async function(userId, member = null){
     await db.delete(`user-${userId}.verification_state`);
     await db.delete(`user-${userId}.verification_guild`);
     await db.delete(`user-${userId}.verification_timeout`);
@@ -109,6 +110,12 @@ const cleanupVerification = async function(userId){
     await db.delete(`user-${userId}.temp_age`);
     await db.delete(`user-${userId}.temp_birthday_ping`);
     await db.delete(`user-${userId}.temp_gender`);
+
+    if (member && config.roles.unverified && !member.roles.cache.has(config.roles.verified)){
+        if (!member.roles.cache.has(config.roles.unverified)){
+            await member.roles.add(config.roles.unverified);
+        }
+    }
 };
 
 /**
@@ -129,6 +136,10 @@ const completeVerification = async function(user, member, shouldAddRole, client)
 
     try {
         await removeExistingAgeRoles(member);
+
+        if (config.roles.unverified && member.roles.cache.has(config.roles.unverified)){
+            await member.roles.remove(config.roles.unverified);
+        }
 
         if (config.roles.verified){
             await member.roles.add(config.roles.verified);
@@ -202,19 +213,6 @@ const handleDMVerification = async function(message){
 
     if (!verificationState || !guildId) return;
 
-    if (timeout && Date.now() > timeout){
-        await message.reply("⏰ Die Verifikation is obglaufn. Bitte starts no amol mitm Button aufm Server.");
-        await cleanupVerification(userId);
-        return;
-    }
-
-    const content = message.content.trim().toLowerCase();
-    if (content === "stopp"){
-        await message.reply("❌ Verifikation obbrochn. Du konnst jederzeit mitm Button aufm Server neich starten.");
-        await cleanupVerification(userId);
-        return;
-    }
-
     const guild = message.client.guilds.cache.get(guildId);
     if (!guild){
         await message.reply("❌ Fehler: Server ned gfunden. Bitte versuachs no amol.");
@@ -226,6 +224,19 @@ const handleDMVerification = async function(message){
     if (!member){
         await message.reply("❌ Fehler: Du bist ned mehr aufm Server. Bitte tritt dem Server erneut bei.");
         await cleanupVerification(userId);
+        return;
+    }
+
+    if (timeout && Date.now() > timeout){
+        await message.reply("⏰ Die Verifikation is obglaufn. Bitte starts no amol mitm Button aufm Server.");
+        await cleanupVerification(userId, member);
+        return;
+    }
+
+    const content = message.content.trim().toLowerCase();
+    if (content === "stopp"){
+        await message.reply("❌ Verifikation obbrochn. Du konnst jederzeit mitm Button aufm Server neich starten.");
+        await cleanupVerification(userId, member);
         return;
     }
 
@@ -330,7 +341,7 @@ const handleBirthdayPingButton = async function(interaction){
             content: "❌ Fehler: Du bist ned mehr aufm Server. Bitte tritt dem Server erneut bei.",
             flags: [MessageFlags.Ephemeral],
         });
-        await cleanupVerification(userId);
+        await cleanupVerification(userId, member);
         return;
     }
 
@@ -382,7 +393,7 @@ const handleGenderSelection = async function(interaction){
             content: "❌ Fehler: Du bist ned mehr aufm Server. Bitte tritt dem Server erneut bei.",
             flags: [MessageFlags.Ephemeral],
         });
-        await cleanupVerification(userId);
+        await cleanupVerification(userId, member);
         return;
     }
 

@@ -60,15 +60,16 @@ export default {
         }
 
         try {
-            // Remove verified role
             if (config.roles.verified && targetMember.roles.cache.has(config.roles.verified)){
                 await targetMember.roles.remove(config.roles.verified);
             }
 
-            // Remove all age roles
             await removeExistingAgeRoles(targetMember);
 
-            // Delete all user data from database
+            if (config.roles.unverified && !targetMember.roles.cache.has(config.roles.unverified)){
+                await targetMember.roles.add(config.roles.unverified);
+            }
+
             await db.delete(`user-${targetUser.id}.verified`);
             await db.delete(`user-${targetUser.id}.birthdate`);
             await db.delete(`user-${targetUser.id}.birthday_ping`);
@@ -79,10 +80,8 @@ export default {
             await db.delete(`user-${targetUser.id}.temp_birthdate`);
             await db.delete(`user-${targetUser.id}.temp_is_full_date`);
 
-            // Log success
             Log.done(`User ${targetUser.displayName} has been reset by ${interaction.user.displayName}`);
 
-            // Log to guild
             await gLogger(
                 interaction,
                 "🔷┃User Reset - Erfolg",
