@@ -29,6 +29,7 @@
     "bun.db": "^1.1.2",
     "check-dependencies": "^2.0.0",
     "discord.js": "^14.21.0",
-    "node-cron": "^4.2.0"
+    "node-cron": "^4.2.0",
+    "openai": "^5.8.2"
   }
 }
