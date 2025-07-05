@@ -33,7 +33,7 @@ const guildMemberRemoveHandler = async function(member){
         Log.done(`[EVENT] User ${member.user.displayName} left guild ${member.guild.name} - removed verification data`);
 
         await gLogger(
-            { user: member.user, guildId: member.guild.id },
+            { user: member.user, guild: member.guild, client: member.client },
             "🔷┃User Left - Data Cleanup",
             `Benutzer ${member.user} hat den Server verlassen.\nAlle Verifikationsdaten wurden automatisch entfernt.`,
         );

@@ -88,7 +88,7 @@ export default {
 
             Log.done(`User ${targetUser.displayName} has been reset by ${interaction.user.displayName}`);
 
-            await gLogger(
+            await gLogger( // @ts-ignore
                 interaction,
                 "🔷┃User Reset - Erfolg",
                 `Benutzer ${targetUser} wurde von ${interaction.user} zurückgesetzt.\nAlle Verifikationsdaten und Rollen wurden entfernt.`,
@@ -101,7 +101,7 @@ export default {
         catch (error){
             Log.error(`Error during user reset for ${targetUser.displayName}:`, error);
 
-            await gLogger(
+            await gLogger( // @ts-ignore
                 interaction,
                 "🔷┃User Reset - Error",
                 `Fehler beim Zurücksetzen von ${targetUser} durch ${interaction.user}:\n${error.message}`,

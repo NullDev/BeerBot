@@ -47,7 +47,7 @@ const deleteUserData = async function(user, member){
         Log.done(`User ${user.displayName} has deleted their own data`);
 
         await gLogger(
-            { user, guildId: member.guild.id },
+            { user, guild: member.guild, client: member.client },
             "🔷┃Data Deletion - User Request",
             `Benutzer ${user} hat seine Daten selbst gelöscht.\nAlle Verifikationsdaten und Rollen wurden entfernt.`,
         );
@@ -58,7 +58,7 @@ const deleteUserData = async function(user, member){
         Log.error(`Error during user data deletion for ${user.displayName}:`, error);
 
         await gLogger(
-            { user, guildId: member.guild.id },
+            { user, guild: member.guild, client: member.client },
             "🔷┃Data Deletion - Error",
             `Fehler beim Löschen der Daten von ${user}:\n${error.message}`,
             "Red",

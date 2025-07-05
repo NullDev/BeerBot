@@ -10,13 +10,13 @@ const db = new BunDB("./data/guild_data.sqlite");
 /**
  * Log to a guild
  *
- * @param {any} interaction
+ * @param {import("discord.js").Interaction | { user: import("discord.js").User, guild: import("discord.js").Guild, client: import("discord.js").Client }} interaction
  * @param {string} title
  * @param {string} description
  * @param {import("discord.js").ColorResolvable | null} [color="Green"]
  */
 const gLogger = async function(interaction, title, description, color = "Green"){
-    const guildId = interaction.guildId || interaction.guild?.id;
+    const guildId = "guildId" in interaction ? interaction.guildId : interaction.guild?.id;
     if (!guildId){
         console.log("gLogger: No guildId found");
         return;

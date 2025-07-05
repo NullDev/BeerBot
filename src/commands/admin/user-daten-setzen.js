@@ -21,9 +21,10 @@ const commandName = import.meta.url.split("/").pop()?.split(".").shift() ?? "";
  * @param {string} birthdate
  * @param {boolean} birthdayPing
  * @param {string} gender
+ * @param {import("../../types.js").CommandInteractionWithOptions} interaction
  * @return {Promise<boolean>}
  */
-const setUserBirthday = async function(user, member, birthdate, birthdayPing, gender){
+const setUserBirthday = async function(user, member, birthdate, birthdayPing, gender, interaction){
     const userId = user.id;
     const age = calculateAge(birthdate);
     if (!age) return false;
@@ -58,7 +59,7 @@ const setUserBirthday = async function(user, member, birthdate, birthdayPing, ge
         Log.done(`Admin set birthday for user ${user.displayName}: ${birthdate} (Age: ${age}, Ping: ${birthdayPing}, Gender: ${gender}, Date type: ${dateType})`);
 
         await gLogger(
-            { user, guildId: member.guild.id },
+            interaction,
             "🔷┃Admin Action - Birthday Set",
             `Admin hat Geburtstag für ${user} gesetzt.\nGeburtsdatum: ${birthdate}\nAlter: ${age}\nGeburtstag Ping: ${birthdayPing ? "Jo" : "Na"}\nGeschlecht: ${gender}\nDatumstyp: ${dateType}`,
         );
@@ -69,7 +70,7 @@ const setUserBirthday = async function(user, member, birthdate, birthdayPing, ge
         Log.error(`Error setting birthday for user ${user.displayName}:`, error);
 
         await gLogger(
-            { user, guildId: member.guild.id },
+            interaction,
             "🔷┃Admin Action - Birthday Set Error",
             `Fehler beim Setzen des Geburtstags für ${user}:\n${error.message}`,
             "Red",
@@ -191,7 +192,7 @@ export default {
                 });
             }
 
-            const success = await setUserBirthday(targetUser, member, birthdate, birthdayPing, gender);
+            const success = await setUserBirthday(targetUser, member, birthdate, birthdayPing, gender, interaction);
 
             if (success){
                 const successEmbed = new EmbedBuilder()

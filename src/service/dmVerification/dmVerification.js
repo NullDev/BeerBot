@@ -180,7 +180,7 @@ const completeVerification = async function(user, member, shouldAddRole){
         });
 
         await gLogger(
-            { user, guildId: member.guild.id },
+            { user, guild: member.guild, client: member.client },
             "🔷┃Verification Log - Erfolg",
             `Benutzer ${user} wurde erfolgreich verifiziert.\nAlter: ${age}\nGeschlecht: ${genderText}\nGeburtstag Ping: ${shouldAddRole ? "Jo" : "Na"}\nDatumstyp: ${dateType}`,
         );
@@ -191,7 +191,7 @@ const completeVerification = async function(user, member, shouldAddRole){
         await user.send("❌ Es is a Fehler bei der Verifikation auftreten. Bitte versuachs später no amol oda kontaktier an Administrator.");
 
         await gLogger(
-            { user, guildId: member.guild.id },
+            { user, guild: member.guild, client: member.client },
             "🔷┃Verification Log - Error",
             `Fehler bei der Verifikation von ${user}:\n${error.message}`,
             "Red",
