@@ -5,6 +5,7 @@ import gLogger from "../gLogger.js";
 import { config } from "../../../config/config.js";
 import { getAgeRole, calculateAge, removeExistingAgeRoles } from "./utils.js";
 import { askBirthdayQuestion, askBirthdayPingQuestion, askGenderQuestion } from "./questions.js";
+import welcomeHandler from "../welcomeHandler.js";
 
 // ========================= //
 // = Copyright (c) NullDev = //
@@ -184,6 +185,8 @@ const completeVerification = async function(user, member, shouldAddRole){
             "🔷┃Verification Log - Erfolg",
             `Benutzer ${user} wurde erfolgreich verifiziert.\nAlter: ${age}\nGeschlecht: ${genderText}\nGeburtstag Ping: ${shouldAddRole ? "Jo" : "Na"}\nDatumstyp: ${dateType}`,
         );
+
+        await welcomeHandler(member);
     }
     catch (error){
         Log.error(`Error during DM verification for user ${user.displayName}:`, error);
