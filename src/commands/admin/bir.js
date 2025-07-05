@@ -9,7 +9,7 @@ const commandName = import.meta.url.split("/").pop()?.split(".").shift() ?? "";
 export default {
     data: new SlashCommandBuilder()
         .setName(commandName)
-        .setDescription("Zeig a Übersicht von ollen Admin-Commands.")
+        .setDescription("Bir")
         .setContexts([InteractionContextType.Guild])
         .setDefaultMemberPermissions(PermissionFlagsBits.Administrator),
     /**
@@ -17,9 +17,7 @@ export default {
      */
     async execute(interaction){
         if (!interaction.deferred && !interaction.replied){
-            await interaction.deferReply({
-                flags: [MessageFlags.Ephemeral],
-            });
+            await interaction.deferReply();
         }
 
         const txt = `Unser Bier, das im Kühlschrank steht,
