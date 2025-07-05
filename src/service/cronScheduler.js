@@ -40,7 +40,7 @@ const scheduleCrons = async function(client){
         if (!channel) return;
 
         await /** @type {import("discord.js").TextChannel} */ (channel)
-            .send("Leitln, bleibts hydriert und trinkts a Bier! Prost 🍺");
+            .send("Leidln, bleibts hydriert und trinkts a Bier! Prost 🍺");
     });
 
     const cronCount = cron.getTasks().size;
