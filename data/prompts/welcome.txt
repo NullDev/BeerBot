@@ -20,4 +20,4 @@ Morgn Brightstar! Da passt ja, bei uns geht scho da Kaffee umanand ☕
 ---
 
 Der Name des neuen Users ist: {{username}}
-Es ist {{time}} Uhr {{timeofday}} am {{date}}.
+Es ist {{time}} Uhr am {{day}} dem {{date}}. Die Tageszeit ist: {{timeofday}}

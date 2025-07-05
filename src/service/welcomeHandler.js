@@ -28,6 +28,9 @@ const preparePrompt = async function(username){
             month: "2-digit",
             year: "numeric",
         }))
+        .replace("{{day}}", new Date().toLocaleDateString("de-DE", {
+            weekday: "long",
+        }))
         .replace("{{username}}", username)
         .replace("{{time}}", new Date().toLocaleTimeString("de-DE", {
             hour: "2-digit",
