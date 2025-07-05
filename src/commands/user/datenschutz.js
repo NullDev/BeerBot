@@ -18,10 +18,9 @@ const commandName = import.meta.url.split("/").pop()?.split(".").shift() ?? "";
  *
  * @param {import("discord.js").User} user
  * @param {import("discord.js").GuildMember} member
- * @param {import("discord.js").Client} client
- * @return {Promise<void>}
+ * @return {Promise<boolean>}
  */
-const deleteUserData = async function(user, member, client){
+const deleteUserData = async function(user, member){
     const userId = user.id;
 
     try {
@@ -48,7 +47,7 @@ const deleteUserData = async function(user, member, client){
         Log.done(`User ${user.displayName} has deleted their own data`);
 
         await gLogger(
-            { user, guild: member.guild, client },
+            { user, guildId: member.guild.id },
             "🔷┃Data Deletion - User Request",
             `Benutzer ${user} hat seine Daten selbst gelöscht.\nAlle Verifikationsdaten und Rollen wurden entfernt.`,
         );
@@ -59,7 +58,7 @@ const deleteUserData = async function(user, member, client){
         Log.error(`Error during user data deletion for ${user.displayName}:`, error);
 
         await gLogger(
-            { user, guild: member.guild, client },
+            { user, guildId: member.guild.id },
             "🔷┃Data Deletion - Error",
             `Fehler beim Löschen der Daten von ${user}:\n${error.message}`,
             "Red",
@@ -75,7 +74,7 @@ export default {
         .setDescription("Infos zum Datenschutz und Datenlöschung.")
         .setContexts([InteractionContextType.Guild]),
     /**
-     * @param {import("discord.js").CommandInteraction} interaction
+     * @param {import("../../types.js").CommandInteractionWithOptions} interaction
      */
     async execute(interaction){
         if (!interaction.deferred && !interaction.replied){
@@ -106,6 +105,7 @@ export default {
 
             await interaction.user.send({
                 embeds: [embed],
+                // @ts-expect-error
                 components: isVerified ? [row] : [],
                 files: [
                     {

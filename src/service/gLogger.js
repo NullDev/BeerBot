@@ -10,7 +10,7 @@ const db = new BunDB("./data/guild_data.sqlite");
 /**
  * Log to a guild
  *
- * @param {import("discord.js").Interaction | import("discord.js").CommandInteraction | { user: import("discord.js").User, guildId: string }} interaction
+ * @param {any} interaction
  * @param {string} title
  * @param {string} description
  * @param {import("discord.js").ColorResolvable | null} [color="Green"]
@@ -28,10 +28,7 @@ const gLogger = async function(interaction, title, description, color = "Green")
         return;
     }
 
-    const { guild } = interaction;
-    const { client } = interaction;
-
-    // If we don't have a guild or client, we can't proceed
+    const { guild, client } = interaction;
     if (!guild || !client){
         console.log(`gLogger: Missing guild or client. Guild: ${!!guild}, Client: ${!!client}`);
         return;

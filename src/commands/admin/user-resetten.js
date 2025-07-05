@@ -30,7 +30,7 @@ export default {
                 .setRequired(true)),
 
     /**
-     * @param {import("discord.js").CommandInteraction} interaction
+     * @param {import("../../types.js").CommandInteractionWithOptions} interaction
      */
     async execute(interaction){
         await interaction.deferReply({ flags: [MessageFlags.Ephemeral] });
@@ -43,6 +43,12 @@ export default {
         }
 
         const targetUser = userOption.user;
+        if (!targetUser){
+            return await interaction.editReply({
+                content: "Den Benutzer konn i ned aufm Server findn.",
+            });
+        }
+
         const targetMember = await interaction.guild?.members.fetch(targetUser.id).catch(() => null);
 
         if (!targetMember){

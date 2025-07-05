@@ -24,7 +24,7 @@ export default {
                 .setRequired(true),
         ),
     /**
-     * @param {import("discord.js").CommandInteraction} interaction
+     * @param {import("../../types.js").CommandInteractionWithOptions} interaction
      */
     async execute(interaction){
         if (!interaction.deferred && !interaction.replied){
@@ -35,6 +35,13 @@ export default {
 
         try {
             const targetUser = interaction.options.getUser("user");
+            if (!targetUser){
+                return await interaction.reply({
+                    content: "❌ Benutzer is ned aufm Server.",
+                    flags: [MessageFlags.Ephemeral],
+                });
+            }
+
             const userId = targetUser.id;
 
             const birthdate = await db.get(`user-${userId}.birthdate`);

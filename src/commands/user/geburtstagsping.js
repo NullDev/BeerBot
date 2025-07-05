@@ -26,7 +26,7 @@ export default {
         .setDescription("Geburtstagsping verwalten oder vollständiges Geburtsdatum nachtragen.")
         .setContexts([InteractionContextType.Guild]),
     /**
-     * @param {import("discord.js").CommandInteraction} interaction
+     * @param {import("../../types.js").CommandInteractionWithOptions} interaction
      */
     async execute(interaction){
         try {
@@ -47,7 +47,7 @@ export default {
                 const modal = new ModalBuilder()
                     .setCustomId("set_full_birthdate")
                     .setTitle("Vollständiges Geburtsdatum nachtragen")
-                    .addComponents(
+                    .addComponents( // @ts-ignore
                         new ActionRowBuilder().addComponents(
                             new TextInputBuilder()
                                 .setCustomId("full_birthdate")
@@ -70,6 +70,7 @@ export default {
             );
             return await interaction.reply({
                 content: `🎂 **Geburtstagsping Status:** ${pingStatus}`,
+                // @ts-expect-error
                 components: [row],
                 flags: [MessageFlags.Ephemeral],
             });

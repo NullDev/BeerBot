@@ -15,7 +15,7 @@ export default {
         .setContexts([InteractionContextType.Guild])
         .setDefaultMemberPermissions(PermissionFlagsBits.Administrator),
     /**
-     * @param {import("discord.js").CommandInteraction} interaction
+     * @param {import("../../types.js").CommandInteractionWithOptions} interaction
      */
     async execute(interaction){
         try {
@@ -28,14 +28,12 @@ export default {
 
             await interaction.editReply({
                 content: "✅ Birthday check completed! Check the logs for details.",
-                flags: [MessageFlags.Ephemeral],
             });
         }
         catch (error){
             Log.error("Error in birthday-force command:", error);
             await interaction.editReply({
                 content: "❌ Es is a Fehler auftreten. Bitte versuachs später no amol.",
-                flags: [MessageFlags.Ephemeral],
             });
         }
     },

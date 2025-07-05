@@ -14,7 +14,7 @@ export default {
         .setDescription("Zagt Informationen üba den Bot")
         .setContexts([InteractionContextType.Guild]),
     /**
-     * @param {import("discord.js").CommandInteraction} interaction
+     * @param {import("../../types.js").CommandInteractionWithOptions} interaction
      */
     async execute(interaction){
         const count = interaction.guild?.memberCount || "N/A";

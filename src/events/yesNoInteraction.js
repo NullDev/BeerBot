@@ -9,7 +9,7 @@ import { ActionRowBuilder, ButtonBuilder, ButtonStyle } from "discord.js";
 /**
  * Create a yes/no interaction
  *
- * @param {import("discord.js").CommandInteraction | import("discord.js").StringSelectMenuInteraction} interaction
+ * @param {import("discord.js").CommandInteraction | import("discord.js").StringSelectMenuInteraction | import("discord.js").ButtonInteraction} interaction
  * @param {object} options
  * @returns {Promise<string>}
  */

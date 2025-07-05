@@ -20,7 +20,7 @@ class BirthdayChecker {
      * Check if today is someone's birthday (full date format)
      *
      * @static
-     * @param {import("../service/client.js").default} client
+     * @param {import("discord.js").Client} client
      * @memberof BirthdayChecker
      */
     static async checkDailyBirthdays(client, force = false){
@@ -94,6 +94,7 @@ class BirthdayChecker {
                             Log.debug(`[CRON] Found member ${member.user.displayName} (${userId}) in guild ${guild.name}`);
 
                             const currentAge = calculateAge(birthdate);
+                            if (!currentAge) continue;
                             const newAgeRoleId = getAgeRole(currentAge);
 
                             const hasCurrentAgeRole = Object.values(config.roles.ages).some(roleId =>
@@ -131,7 +132,7 @@ class BirthdayChecker {
                             .setColor(13111086)
                             .setTimestamp();
 
-                        await generalChannel.send({
+                        await /** @type {import("discord.js").TextChannel} */ (generalChannel).send({
                             content: `<@&${config.roles.birthday}>`,
                             embeds: [birthdayEmbed],
                         });
@@ -232,6 +233,7 @@ class BirthdayChecker {
                         if (!member) continue;
 
                         const currentAge = calculateAge(birthdate);
+                        if (!currentAge) continue;
                         const newAgeRoleId = getAgeRole(currentAge);
 
                         const hasCurrentAgeRole = Object.values(config.roles.ages).some(roleId =>

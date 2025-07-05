@@ -98,7 +98,7 @@ const startDMVerification = async function(interaction){
  * Clean up verification data
  *
  * @param {string} userId
- * @param {import("discord.js").GuildMember} [member]
+ * @param {import("discord.js").GuildMember | null} [member]
  * @return {Promise<void>}
  */
 const cleanupVerification = async function(userId, member = null){
@@ -124,13 +124,13 @@ const cleanupVerification = async function(userId, member = null){
  * @param {import("discord.js").User} user
  * @param {import("discord.js").GuildMember} member
  * @param {boolean} shouldAddRole
- * @param {import("discord.js").Client} client
  * @return {Promise<void>}
  */
-const completeVerification = async function(user, member, shouldAddRole, client){
+const completeVerification = async function(user, member, shouldAddRole){
     const userId = user.id;
     const birthdate = await db.get(`user-${userId}.temp_birthdate`);
     const age = calculateAge(birthdate);
+    if (!age) return;
     const ageRoleId = getAgeRole(age);
     const gender = await db.get(`user-${userId}.temp_gender`);
     const isFullDate = await db.get(`user-${userId}.temp_is_full_date`);
@@ -180,7 +180,7 @@ const completeVerification = async function(user, member, shouldAddRole, client)
         });
 
         await gLogger(
-            { user, guild: member.guild, client },
+            { user, guildId: member.guild.id },
             "🔷┃Verification Log - Erfolg",
             `Benutzer ${user} wurde erfolgreich verifiziert.\nAlter: ${age}\nGeschlecht: ${genderText}\nGeburtstag Ping: ${shouldAddRole ? "Jo" : "Na"}\nDatumstyp: ${dateType}`,
         );
@@ -191,7 +191,7 @@ const completeVerification = async function(user, member, shouldAddRole, client)
         await user.send("❌ Es is a Fehler bei der Verifikation auftreten. Bitte versuachs später no amol oda kontaktier an Administrator.");
 
         await gLogger(
-            { user, guild: member.guild, client },
+            { user, guildId: member.guild.id },
             "🔷┃Verification Log - Error",
             `Fehler bei der Verifikation von ${user}:\n${error.message}`,
             "Red",
@@ -408,7 +408,7 @@ const handleGenderSelection = async function(interaction){
         components: [],
     });
 
-    await completeVerification(interaction.user, member, birthdayPing, interaction.client);
+    await completeVerification(interaction.user, member, birthdayPing);
 };
 
 export { startDMVerification, handleDMVerification, handleBirthdayPingButton, handleGenderSelection };

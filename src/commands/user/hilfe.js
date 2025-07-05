@@ -12,7 +12,7 @@ export default {
         .setDescription("Zeig a Übersicht von ollen Commands.")
         .setContexts([InteractionContextType.Guild]),
     /**
-     * @param {import("discord.js").CommandInteraction} interaction
+     * @param {import("../../types.js").CommandInteractionWithOptions} interaction
      */
     async execute(interaction){
         if (!interaction.deferred && !interaction.replied){

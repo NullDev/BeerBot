@@ -79,7 +79,7 @@ const handleButton = async function(interaction){
         await db.set(`user-${userId}.birthday_ping`, birthdayPing);
         return await interaction.update({
             content: `🎂 **Geburtstagsping Status:** ${birthdayPing ? "Jo (aktiviert)" : "Na (deaktiviert)"}`,
-            components: [
+            components: [ // @ts-ignore
                 {
                     type: 1,
                     components: [
@@ -105,7 +105,7 @@ const handleButton = async function(interaction){
             });
         }
 
-        let {guild} = interaction;
+        let { guild } = interaction;
         let member = null;
 
         if (!guild){
@@ -117,10 +117,10 @@ const handleButton = async function(interaction){
                 });
             }
 
-            guild = verifiedGuilds.first();
+            guild = verifiedGuilds.first() || null;
         }
 
-        member = await guild.members.fetch(userId).catch(() => null);
+        member = await guild?.members.fetch(userId).catch(() => null);
         if (!member){
             return await interaction.reply({
                 content: "Benutzer ned aufm Server gfunden.",
@@ -137,7 +137,7 @@ const handleButton = async function(interaction){
         });
 
         if (confirmation === "yes"){
-            const success = await deleteUserData(interaction.user, member, interaction.client);
+            const success = await deleteUserData(interaction.user, member);
 
             if (success){
                 return await interaction.followUp({
@@ -203,7 +203,7 @@ const handleModalSubmit = async function(interaction){
         const pingStatus = birthdayPing ? "Jo (aktiviert)" : "Na (deaktiviert)";
         return await interaction.reply({
             content: `✅ Dein vollständiges Geburtsdatum wurde gespeichert. **Achtung:** Du kannst dieses Datum nur ändern, indem du all deine Daten löschst!\n\n🎂 **Geburtstagsping Status:** ${pingStatus}`,
-            components: [
+            components: [ // @ts-ignore
                 {
                     type: 1,
                     components: [

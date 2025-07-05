@@ -11,10 +11,12 @@ const db = new BunDB("./data/guild_data.sqlite");
 /**
  * Handle guildMemberRemove event
  *
- * @param {import("discord.js").GuildMember} member
+ * @param {import("discord.js").GuildMember | import("discord.js").PartialGuildMember} member
  * @return {Promise<void>}
  */
 const guildMemberRemoveHandler = async function(member){
+    if (member.partial) return;
+
     try {
         const userId = member.user.id;
 
@@ -31,7 +33,7 @@ const guildMemberRemoveHandler = async function(member){
         Log.done(`[EVENT] User ${member.user.displayName} left guild ${member.guild.name} - removed verification data`);
 
         await gLogger(
-            { user: member.user, guild: member.guild, client: member.client },
+            { user: member.user, guildId: member.guild.id },
             "🔷┃User Left - Data Cleanup",
             `Benutzer ${member.user} hat den Server verlassen.\nAlle Verifikationsdaten wurden automatisch entfernt.`,
         );

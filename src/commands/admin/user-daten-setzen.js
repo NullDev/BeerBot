@@ -26,6 +26,7 @@ const commandName = import.meta.url.split("/").pop()?.split(".").shift() ?? "";
 const setUserBirthday = async function(user, member, birthdate, birthdayPing, gender){
     const userId = user.id;
     const age = calculateAge(birthdate);
+    if (!age) return false;
     const ageRoleId = getAgeRole(age);
     const isFullDate = /^\d{1,2}\.\d{1,2}\.\d{4}$/.test(birthdate);
 
@@ -57,7 +58,7 @@ const setUserBirthday = async function(user, member, birthdate, birthdayPing, ge
         Log.done(`Admin set birthday for user ${user.displayName}: ${birthdate} (Age: ${age}, Ping: ${birthdayPing}, Gender: ${gender}, Date type: ${dateType})`);
 
         await gLogger(
-            { user, guild: member.guild, client: member.client },
+            { user, guildId: member.guild.id },
             "🔷┃Admin Action - Birthday Set",
             `Admin hat Geburtstag für ${user} gesetzt.\nGeburtsdatum: ${birthdate}\nAlter: ${age}\nGeburtstag Ping: ${birthdayPing ? "Jo" : "Na"}\nGeschlecht: ${gender}\nDatumstyp: ${dateType}`,
         );
@@ -68,7 +69,7 @@ const setUserBirthday = async function(user, member, birthdate, birthdayPing, ge
         Log.error(`Error setting birthday for user ${user.displayName}:`, error);
 
         await gLogger(
-            { user, guild: member.guild, client: member.client },
+            { user, guildId: member.guild.id },
             "🔷┃Admin Action - Birthday Set Error",
             `Fehler beim Setzen des Geburtstags für ${user}:\n${error.message}`,
             "Red",
@@ -114,7 +115,7 @@ export default {
                 .setRequired(false),
         ),
     /**
-     * @param {import("discord.js").CommandInteraction} interaction
+     * @param {import("../../types.js").CommandInteractionWithOptions} interaction
      */
     async execute(interaction){
         if (!interaction.deferred && !interaction.replied){
@@ -125,11 +126,29 @@ export default {
 
         try {
             const targetUser = interaction.options.getUser("user");
+            if (!targetUser){
+                return await interaction.reply({
+                    content: "❌ Benutzer is ned aufm Server.",
+                    flags: [MessageFlags.Ephemeral],
+                });
+            }
             const birthdate = interaction.options.getString("geburtstag");
+            if (!birthdate){
+                return await interaction.reply({
+                    content: "❌ Geburtsdatum is ned gsetzt.",
+                    flags: [MessageFlags.Ephemeral],
+                });
+            }
             const gender = interaction.options.getString("gender");
+            if (!gender){
+                return await interaction.reply({
+                    content: "❌ Geschlecht is ned gsetzt.",
+                    flags: [MessageFlags.Ephemeral],
+                });
+            }
             const birthdayPing = interaction.options.getBoolean("geburtstag_ping") ?? false;
 
-            const member = await interaction.guild.members.fetch(targetUser.id).catch(() => null);
+            const member = await interaction.guild?.members.fetch(targetUser.id).catch(() => null);
             if (!member){
                 if (interaction.deferred){
                     await interaction.editReply({
@@ -142,7 +161,7 @@ export default {
                         flags: [MessageFlags.Ephemeral],
                     });
                 }
-                return;
+                return null;
             }
 
             const isVerified = await db.get(`user-${targetUser.id}.verified`);
@@ -191,6 +210,8 @@ export default {
                     flags: [MessageFlags.Ephemeral],
                 });
             }
+
+            return null;
         }
         catch (error){
             Log.error("Error in user-bday-setzen command:", error);
@@ -208,6 +229,8 @@ export default {
                     flags: [MessageFlags.Ephemeral],
                 });
             }
+
+            return null;
         }
     },
 };

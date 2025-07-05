@@ -39,7 +39,8 @@ const scheduleCrons = async function(client){
         const channel = await client.channels.fetch(generalChatId);
         if (!channel) return;
 
-        await channel.send("Leitln, bleibts hydriert und trinkts a Bier! Prost 🍺");
+        await /** @type {import("discord.js").TextChannel} */ (channel)
+            .send("Leitln, bleibts hydriert und trinkts a Bier! Prost 🍺");
     });
 
     const cronCount = cron.getTasks().size;

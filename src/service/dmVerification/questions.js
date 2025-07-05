@@ -31,7 +31,7 @@ export const askBirthdayPingQuestion = async function(user){
         );
 
     await user.send({
-        embeds: [embed],
+        embeds: [embed], // @ts-ignore
         components: [row],
     });
 };
@@ -76,7 +76,7 @@ export const askGenderQuestion = async function(user){
         );
 
     await user.send({
-        embeds: [embed],
+        embeds: [embed], // @ts-ignore
         components: [row],
     });
 };

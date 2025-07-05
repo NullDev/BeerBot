@@ -11,7 +11,7 @@ export default {
         .setDescription("Zeigt dei gespeicherten Verifikationsdaten an.")
         .setContexts([InteractionContextType.Guild]),
     /**
-     * @param {import("discord.js").CommandInteraction} interaction
+     * @param {import("../../types.js").CommandInteractionWithOptions} interaction
      */
     async execute(interaction){
         if (!interaction.deferred && !interaction.replied){
