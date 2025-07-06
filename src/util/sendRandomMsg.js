@@ -31,9 +31,15 @@ Prost. 🍻`,
     "So, I gönn ma jetz a Schnitzel und a Bier. Servas! 🍻",
     "Ich bin eigentlich ka bot. <@371724846205239326> hält mi im Kelller gefangen und zwingt mi des zu schreibn. Hilfe",
     "Vergessts ned, a Radler is Bierquälerei.",
-    "Du konnst kan Koter hobn, wennst ned aufhörst zum saufen.",
+    "Fun fact: Du konnst kan Koter hobn, wennst ned aufhörst zum saufen. 🍺",
     "Hot wer mei Schoggokrosong gsehn? I finds nemma.",
     "Oida i hob an sitzen dws gkaubt ma ksner wkwäkdlam ...",
+    "Bin i scho wieder der Einzige, der ned mehr nüchtern is? Frag für a Freund.",
+    "I hab ka Problem mit Alkohol. Nur ohne.",
+    "Oida, i wollt nur schnell schreibn dass i den Faden verloren hob... Prost! 🍻",
+    "Sorry kann grad ka Nachricht schreibn. Muss für <@371724846205239326> tschick holen...",
+    "Hobts scho Mittag gessen? :3",
+    "Serverstatus: leicht angsoffen, aber stabil. Glaub i... Ping is grad ned so gut",
 ];
 
 /**
