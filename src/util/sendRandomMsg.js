@@ -40,6 +40,7 @@ Prost. 🍻`,
     "Sorry kann grad ka Nachricht schreibn. Muss für <@371724846205239326> tschick holen...",
     "Hobts scho Mittag gessen? :3",
     "Serverstatus: leicht angsoffen, aber stabil. Glaub i... Ping is grad ned so gut",
+    "Bot Status:\nCPU: `10%`. Alkoholpegel: `90%`. RAM: `Voll`. Glass: `Leer`.",
 ];
 
 /**
