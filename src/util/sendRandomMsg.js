@@ -71,7 +71,9 @@ const sendRandomMsg = async function(client){
 
     const randomMessage = await getRandomMsg();
     await /** @type {import("discord.js").TextChannel} */ (channel)
-        .send(randomMessage);
+        .send(randomMessage).catch((err) => {
+            Log.error("Failed to send random message:", err);
+        });
 
     Log.done("Sent random message to general chat");
 };
