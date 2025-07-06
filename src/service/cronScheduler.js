@@ -3,7 +3,7 @@ import Log from "../util/log.js";
 import LogHandler from "../crons/removeOldLogs.js";
 import UserCleanupHandler from "../crons/removeNonExistingUser.js";
 import BirthdayChecker from "../crons/birthdayChecker.js";
-import { config } from "../../config/config.js";
+import sendRandomMsg from "../util/sendRandomMsg.js";
 
 // ========================= //
 // = Copyright (c) NullDev = //
@@ -34,13 +34,12 @@ const scheduleCrons = async function(client){
 
     // every day at 13:37
     cron.schedule("37 13 * * *", async() => {
-        const generalChatId  = config.channels.general;
+        await sendRandomMsg(client);
+    });
 
-        const channel = await client.channels.fetch(generalChatId);
-        if (!channel) return;
-
-        await /** @type {import("discord.js").TextChannel} */ (channel)
-            .send("Leidln, bleibts hydriert und trinkts a Bier! Prost 🍺");
+    // every day at 20:15
+    cron.schedule("15 20 * * *", async() => {
+        await sendRandomMsg(client);
     });
 
     const cronCount = cron.getTasks().size;
