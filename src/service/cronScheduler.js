@@ -3,6 +3,7 @@ import Log from "../util/log.js";
 import LogHandler from "../crons/removeOldLogs.js";
 import UserCleanupHandler from "../crons/removeNonExistingUser.js";
 import BirthdayChecker from "../crons/birthdayChecker.js";
+import UnverifiedUserCleanupHandler from "../crons/removeUnverifiedUsers.js";
 import sendRandomMsg from "../util/sendRandomMsg.js";
 
 // ========================= //
@@ -32,6 +33,11 @@ const scheduleCrons = async function(client){
         await UserCleanupHandler.removeNonExistingUsers(client);
     });
 
+    // every 6 hours - check for unverified users to kick
+    cron.schedule("0 */6 * * *", async() => {
+        await UnverifiedUserCleanupHandler.kickUnverifiedUsers(client);
+    });
+
     // every day at 13:37
     cron.schedule("37 13 * * *", async() => {
         await sendRandomMsg(client);
@@ -51,6 +57,7 @@ const scheduleCrons = async function(client){
     Log.done("Scheduled " + cronCount + " Crons.");
 
     // start jobs on init
+    await UnverifiedUserCleanupHandler.kickUnverifiedUsers(client);
     await LogHandler.removeOldLogs();
     await UserCleanupHandler.removeNonExistingUsers(client);
     await BirthdayChecker.checkStartupBirthdays(client);

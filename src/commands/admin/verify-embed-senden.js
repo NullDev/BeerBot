@@ -60,7 +60,7 @@ export default {
         const embed = new EmbedBuilder()
             .setColor(defaults.embed_color)
             .setTitle("🔷┃Verifikation")
-            .setDescription("### Servas!\n🍺┃Willkommen am **Bundes Beer** Server!\n🛡️┃Um verifiziert zu werdn und olle Channel sehen zu kennan,\n🌐┃klick bittschen auf den Button untn und fü des Formular aus.\n\n💎┃Vü spaß am Serva")
+            .setDescription("### Servas!\n🍺┃Willkommen am **Bundes Beer** Server!\n🛡️┃Um verifiziert zu werdn und olle Channel sehen zu kennan,\n🌐┃klick bittschen auf den Button untn und fü des Formular aus.\n\n⚠️┃Wenn du des ned innerhalb von 48 Stunden mochst,\n⚠️┃wirst du vom Server gekickt.\n\n💎┃Vü spaß am Serva")
             .setImage("attachment://upsell.jpg")
             .setFooter({
                 text: "Wonnst ane Frogn oda Probleme host, gib am Staff-Member bescheid.",

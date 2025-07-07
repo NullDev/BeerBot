@@ -111,6 +111,7 @@ const cleanupVerification = async function(userId, member = null){
     await db.delete(`user-${userId}.temp_age`);
     await db.delete(`user-${userId}.temp_birthday_ping`);
     await db.delete(`user-${userId}.temp_gender`);
+    await db.delete(`user-${userId}.unverified_join_time`);
 
     if (member && config.roles.unverified && !member.roles.cache.has(config.roles.verified)){
         if (!member.roles.cache.has(config.roles.unverified)){
