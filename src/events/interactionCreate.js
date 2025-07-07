@@ -1,6 +1,7 @@
 import { BunDB } from "bun.db";
 import { MessageFlags } from "discord.js";
 import { startDMVerification, handleBirthdayPingButton, handleGenderSelection } from "../service/dmVerification/dmVerification.js";
+import { getAgeRole, removeExistingAgeRoles } from "../service/dmVerification/utils.js";
 import { deleteUserData } from "../commands/user/datenschutz.js";
 import createYesNoInteraction from "./yesNoInteraction.js";
 import gLogger from "../service/gLogger.js";
@@ -203,10 +204,15 @@ const handleModalSubmit = async function(interaction){
         if (typeof birthdayPing !== "boolean") birthdayPing = false;
         const pingStatus = birthdayPing ? "Jo (aktiviert)" : "Na (deaktiviert)";
 
+        if (!interaction.member) return null; // @ts-ignore
+        await removeExistingAgeRoles(interaction.member);
+        const ageRole = getAgeRole(age); // @ts-ignore
+        if (ageRole) await interaction.member.roles.add(ageRole);
+
         await gLogger(
             interaction,
             "🔷┃User Nachtrag - Sucess",
-            `User ${interaction.user} hat sein vollständiges Geburtsdatum nachgetragen: ${fullDate}.\nPing Status: ${pingStatus}`,
+            `User ${interaction.user} hat sein vollständiges Geburtsdatum nachgetragen: ${fullDate}.\nPing Status: ${pingStatus}\nAlter: ${age}`,
         );
         Log.done(`User ${interaction.user.username} (${interaction.user.id}) hat sein vollständiges Geburtsdatum nachgetragen: ${fullDate}. Ping Status: ${pingStatus}`);
 
