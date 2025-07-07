@@ -58,7 +58,7 @@ const setUserBirthday = async function(user, member, birthdate, birthdayPing, ge
         const admin = interaction.user;
 
         const dateType = isFullDate ? "Vollständiges Datum" : "Nur Jahr";
-        Log.done(`Admin ${admin} set birthday for user ${user.displayName}: ${birthdate} (Age: ${age}, Ping: ${birthdayPing}, Gender: ${gender}, Date type: ${dateType})`);
+        Log.done(`Admin ${admin.displayName} set birthday for user ${user.displayName}: ${birthdate} (Age: ${age}, Ping: ${birthdayPing}, Gender: ${gender}, Date type: ${dateType})`);
 
         await gLogger( // @ts-ignore
             interaction,
