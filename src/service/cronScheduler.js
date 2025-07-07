@@ -37,6 +37,11 @@ const scheduleCrons = async function(client){
         await sendRandomMsg(client);
     });
 
+    // every day at 16:30
+    cron.schedule("30 16 * * *", async() => {
+        await sendRandomMsg(client);
+    });
+
     // every day at 20:15
     cron.schedule("15 20 * * *", async() => {
         await sendRandomMsg(client);
