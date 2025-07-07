@@ -58,7 +58,7 @@ const setUserBirthday = async function(user, member, birthdate, birthdayPing, ge
         const dateType = isFullDate ? "Vollständiges Datum" : "Nur Jahr";
         Log.done(`Admin set birthday for user ${user.displayName}: ${birthdate} (Age: ${age}, Ping: ${birthdayPing}, Gender: ${gender}, Date type: ${dateType})`);
 
-        await gLogger(
+        await gLogger( // @ts-ignore
             interaction,
             "🔷┃Admin Action - Birthday Set",
             `Admin hat Geburtstag für ${user} gesetzt.\nGeburtsdatum: ${birthdate}\nAlter: ${age}\nGeburtstag Ping: ${birthdayPing ? "Jo" : "Na"}\nGeschlecht: ${gender}\nDatumstyp: ${dateType}`,
@@ -69,7 +69,7 @@ const setUserBirthday = async function(user, member, birthdate, birthdayPing, ge
     catch (error){
         Log.error(`Error setting birthday for user ${user.displayName}:`, error);
 
-        await gLogger(
+        await gLogger( // @ts-ignore
             interaction,
             "🔷┃Admin Action - Birthday Set Error",
             `Fehler beim Setzen des Geburtstags für ${user}:\n${error.message}`,

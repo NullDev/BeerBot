@@ -3,6 +3,7 @@ import { MessageFlags } from "discord.js";
 import { startDMVerification, handleBirthdayPingButton, handleGenderSelection } from "../service/dmVerification/dmVerification.js";
 import { deleteUserData } from "../commands/user/datenschutz.js";
 import createYesNoInteraction from "./yesNoInteraction.js";
+import gLogger from "../service/gLogger.js";
 import Log from "../util/log.js";
 
 // ========================= //
@@ -201,6 +202,14 @@ const handleModalSubmit = async function(interaction){
         let birthdayPing = await db.get(`user-${interaction.user.id}.birthday_ping`);
         if (typeof birthdayPing !== "boolean") birthdayPing = false;
         const pingStatus = birthdayPing ? "Jo (aktiviert)" : "Na (deaktiviert)";
+
+        await gLogger(
+            interaction,
+            "🔷┃User Nachtrag - Sucess",
+            `User ${interaction.user} hat sein vollständiges Geburtsdatum nachgetragen: ${fullDate}.\nPing Status: ${pingStatus}`,
+        );
+        Log.done(`User ${interaction.user.username} (${interaction.user.id}) hat sein vollständiges Geburtsdatum nachgetragen: ${fullDate}. Ping Status: ${pingStatus}`);
+
         return await interaction.reply({
             content: `✅ Dein vollständiges Geburtsdatum wurde gespeichert. **Achtung:** Du kannst dieses Datum nur ändern, indem du all deine Daten löschst!\n\n🎂 **Geburtstagsping Status:** ${pingStatus}`,
             components: [ // @ts-ignore
