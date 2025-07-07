@@ -29,7 +29,7 @@ in Ewigkeit.
 Prost. 🍻`,
     "Leidln, bleibts hydriert und trinkts a Bier! Prost 🍺",
     "So, I gönn ma jetz a Schnitzel und a Bier. Servas! 🍻",
-    "Ich bin eigentlich ka bot. <@371724846205239326> hält mi im Kelller gefangen und zwingt mi des zu schreibn. Hilfe",
+    "Ich bin eigentlich ka bot. <@371724846205239326> hält mi im Kelller gefangen und zwingt mi des zu schreibn. Hilfe <:sadcat:1391558878054977566>",
     "Vergessts ned, a Radler is Bierquälerei.",
     "Fun fact: Du konnst kan Koter hobn, wennst ned aufhörst zum saufen. 🍺",
     "Hot wer mei Schoggokrosong gsehn? I finds nemma. <:sadcat:1391558878054977566>",
@@ -42,25 +42,36 @@ Prost. 🍻`,
     "Serverstatus: leicht angsoffen, aber stabil. Glaub i... Ping is grad ned so gut",
     "Bot Status:\nCPU: `10%`. Alkoholpegel: `90%`. RAM: `Voll`. Glass: `Leer`.",
     "Heute schon zur Gottkönigin <@941802606588747806> gebetet? <a:pikapray:1391558728075182110>",
+    "MEI BIER IS NED DEPPAT <:angry:1391767310397870121>",
+    "A Leberkassemmal, A Leberkassemmal in da fruah 🎵🎶",
 ];
 
 /**
- * Get a random message from the messages array, avoiding the last sent message
+ * Get a random message from the messages array, avoiding the last 3 sent messages
  *
  * @return {Promise<string>} A random message from the messages array
  */
 const getRandomMsg = async function(){
-    const lastMessageIndex = await db.get("last_random_message_index");
+    const lastMessageIndices = await db.get("last_random_message_indices") || [];
 
-    Log.done("Last random message index: " + lastMessageIndex);
+    Log.done("Last random message indices: " + JSON.stringify(lastMessageIndices));
 
     let randomIndex;
+    let attempts = 0;
+    const maxAttempts = 100;
+
     do {
         randomIndex = Math.floor(Math.random() * messages.length);
-    } while (lastMessageIndex !== null && randomIndex === lastMessageIndex && messages.length > 1);
+        attempts++;
+    } while (
+        lastMessageIndices.includes(randomIndex) &&
+        messages.length > lastMessageIndices.length &&
+        attempts < maxAttempts
+    );
 
-    await db.set("last_random_message_index", randomIndex);
-    Log.done("Set last random message index to " + randomIndex);
+    const newLastIndices = [...lastMessageIndices.slice(-2), randomIndex];
+    await db.set("last_random_message_indices", newLastIndices);
+    Log.done("Set last random message indices to " + JSON.stringify(newLastIndices));
 
     return messages[randomIndex];
 };
