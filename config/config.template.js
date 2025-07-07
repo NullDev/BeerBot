@@ -8,7 +8,7 @@ export default {
         birthday: "",
         unverified: "",
         ages: {
-            "14_17": "",
+            "13_17": "",
             "18_24": "",
             "25_29": "",
             "30_35": "",

@@ -191,9 +191,9 @@ const handleModalSubmit = async function(interaction){
         if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())){
             age--;
         }
-        if (isNaN(birthDate.getTime()) || age < 14 || age > 120){
+        if (isNaN(birthDate.getTime()) || age < 13 || age > 120){
             return await interaction.reply({
-                content: "❌ Das angegebene Datum ist ungültig oder das Alter liegt außerhalb des erlaubten Bereichs (14-120 Jahre).",
+                content: "❌ Das angegebene Datum ist ungültig oder das Alter liegt außerhalb des erlaubten Bereichs (13-120 Jahre).",
                 flags: [MessageFlags.Ephemeral],
             });
         }

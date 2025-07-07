@@ -34,7 +34,7 @@ const setUserBirthday = async function(user, member, birthdate, birthdayPing, ge
     try {
         if (age === null) throw new Error("Ungültiges Datumsformat. Verwende JJJJ (z.B. 1999) oder TT.MM.JJJJ (z.B. 25.01.1999).");
 
-        if (age < 14) throw new Error("Benutzer muass mindestens 14 Jahre oid sein.");
+        if (age < 13) throw new Error("Benutzer muass mindestens 13 Jahre oid sein.");
 
         if (age > 120) throw new Error("Des angegebene Alter scheint ned korrekt zu sein.");
 

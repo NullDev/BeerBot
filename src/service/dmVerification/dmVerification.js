@@ -257,18 +257,18 @@ const handleDMVerification = async function(message){
             return;
         }
 
-        if (age < 14){
-            await message.reply("❌ Du muasst mindestens 14 Jahre alt sein, um auf dem server zu sein. Du wurdest jetzt vom Server entfernt.");
-            await member.kick("Nutzer ist unter 14.").catch((error) => {
+        if (age < 13){
+            await message.reply("❌ Du muasst mindestens 13 Jahre alt sein, um auf dem server zu sein. Du wurdest jetzt vom Server entfernt.");
+            await member.kick("Nutzer ist unter 13.").catch((error) => {
                 Log.error(`Failed to kick user ${message.author.tag}:`, error);
             });
             await gLogger(
                 { user: message.author, guild: member.guild, client: member.client },
                 "🔷┃Verification Log - Warnung",
-                `Benutzer ${message.author} wurde vom Server entfernt, da er unter 14 Jahre alt is.\nAlter: ${age}\nGeburtsdatum: ${date}`,
+                `Benutzer ${message.author} wurde vom Server entfernt, da er unter 13 Jahre alt is.\nAlter: ${age}\nGeburtsdatum: ${date}`,
                 "Red",
             );
-            Log.warn(`User ${message.author.tag} wurde vom Server entfernt, da er unter 14 Jahre alt is. Alter: ${age}, Geburtsdatum: ${date}`);
+            Log.warn(`User ${message.author.tag} wurde vom Server entfernt, da er unter 13 Jahre alt is. Alter: ${age}, Geburtsdatum: ${date}`);
             await cleanupVerification(userId, member);
             return;
         }

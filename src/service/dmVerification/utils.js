@@ -12,8 +12,8 @@ import Log from "../../util/log.js";
  * @return {string|null}
  */
 export const getAgeRole = function(age){
-    if (age < 14) return null;
-    if (age >= 14 && age <= 17) return config.roles.ages["14_17"];
+    if (age < 13) return null;
+    if (age >= 13 && age <= 17) return config.roles.ages["13_17"];
     if (age >= 18 && age <= 24) return config.roles.ages["18_24"];
     if (age >= 25 && age <= 29) return config.roles.ages["25_29"];
     if (age >= 30 && age <= 35) return config.roles.ages["30_35"];
