@@ -55,13 +55,15 @@ const setUserBirthday = async function(user, member, birthdate, birthdayPing, ge
         await db.set(`user-${userId}.birthday_ping`, birthdayPing);
         await db.set(`user-${userId}.gender`, gender);
 
+        const admin = interaction.user;
+
         const dateType = isFullDate ? "Vollständiges Datum" : "Nur Jahr";
-        Log.done(`Admin set birthday for user ${user.displayName}: ${birthdate} (Age: ${age}, Ping: ${birthdayPing}, Gender: ${gender}, Date type: ${dateType})`);
+        Log.done(`Admin ${admin} set birthday for user ${user.displayName}: ${birthdate} (Age: ${age}, Ping: ${birthdayPing}, Gender: ${gender}, Date type: ${dateType})`);
 
         await gLogger( // @ts-ignore
             interaction,
             "🔷┃Admin Action - Birthday Set",
-            `Admin hat Geburtstag für ${user} gesetzt.\nGeburtsdatum: ${birthdate}\nAlter: ${age}\nGeburtstag Ping: ${birthdayPing ? "Jo" : "Na"}\nGeschlecht: ${gender}\nDatumstyp: ${dateType}`,
+            `Admin ${admin} hat Geburtstag für ${user} gesetzt.\nGeburtsdatum: ${birthdate}\nAlter: ${age}\nGeburtstag Ping: ${birthdayPing ? "Jo" : "Na"}\nGeschlecht: ${gender}\nDatumstyp: ${dateType}`,
         );
 
         return true;
