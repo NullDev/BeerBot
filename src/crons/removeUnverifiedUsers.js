@@ -42,11 +42,13 @@ class UnverifiedUserCleanupHandler {
                     continue;
                 }
 
-                const role = guild.roles.cache.get(unverifiedRole);
+                const role = await guild.roles.fetch(unverifiedRole);
                 if (!role){
                     Log.error(`[CRON] Unverified role not found in guild ${guild.name}`);
                     continue;
                 }
+
+                Log.info(`[CRON] Found ${role.members.size} users with unverified role in guild ${guild.name}`);
 
                 const membersWithUnverifiedRole = role.members;
 
@@ -57,7 +59,7 @@ class UnverifiedUserCleanupHandler {
                         const joinTime = await db.get(`user-${memberId}.unverified_join_time`);
                         if (!joinTime){
                             // If no join time stored, set it to now (first time we're checking this user)
-                            await db.set(`user-${memberId}.unverified_join_time`, currentTime);
+                            await db.set(`user-${memberId}.unverified_join_time`, "1751900625");
                             Log.done(`[CRON] Set join time for user ${member.user.displayName} in guild ${guild.name}`);
                             continue;
                         }
