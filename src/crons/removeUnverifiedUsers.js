@@ -63,7 +63,7 @@ class UnverifiedUserCleanupHandler {
                         const joinTime = await db.get(`user-${memberId}.unverified_join_time`);
                         if (!joinTime){
                             // If no join time stored, set it to now (first time we're checking this user)
-                            await db.set(`user-${memberId}.unverified_join_time`, "1751900625");
+                            await db.set(`user-${memberId}.unverified_join_time`, currentTime);
                             Log.done(`[CRON] Set join time for user ${member.user.displayName} in guild ${guild.name}`);
                             continue;
                         }
