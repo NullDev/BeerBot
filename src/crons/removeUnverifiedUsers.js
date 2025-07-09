@@ -48,9 +48,13 @@ class UnverifiedUserCleanupHandler {
                     continue;
                 }
 
-                Log.info(`[CRON] Found ${role.members.size} users with unverified role in guild ${guild.name}`);
+                await guild.members.fetch();
 
-                const membersWithUnverifiedRole = role.members;
+                const membersWithUnverifiedRole = guild.members.cache.filter(member =>
+                    member.roles.cache.has(unverifiedRole),
+                );
+
+                Log.info(`[CRON] Found ${membersWithUnverifiedRole.size} users with unverified role in guild ${guild.name}`);
 
                 for (const [memberId, member] of membersWithUnverifiedRole){
                     checkedUsers++;
