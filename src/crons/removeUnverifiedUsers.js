@@ -78,6 +78,7 @@ class UnverifiedUserCleanupHandler {
                                 { user: member.user, guild: member.guild, client: member.client },
                                 "🔷┃User kick - Sucess",
                                 `Benutzer ${member.user} wurde aus dem Server ${member.guild} gekickt, da er nicht innerhalb von 48 Stunden verifiziert hat.`,
+                                "Red",
                             );
 
                             await db.delete(`user-${memberId}.unverified_join_time`);

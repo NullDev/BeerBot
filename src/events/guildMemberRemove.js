@@ -36,6 +36,7 @@ const guildMemberRemoveHandler = async function(member){
             { user: member.user, guild: member.guild, client: member.client },
             "🔷┃User Left - Data Cleanup",
             `Benutzer ${member.user} hat den Server verlassen.\nAlle Verifikationsdaten wurden automatisch entfernt.`,
+            "Orange",
         );
     }
     catch (error){
