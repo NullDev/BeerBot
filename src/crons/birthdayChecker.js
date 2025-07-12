@@ -65,6 +65,7 @@ class BirthdayChecker {
                 Log.debug(`[CRON] Found ${verifiedUsers.length} verified users in guild ${guild.name}`);
 
                 const guildBirthdayUsers = [];
+                const birthdayUserData = [];
 
                 for (const { userId, userData } of verifiedUsers){
                     const {birthdate} = userData;
@@ -84,47 +85,62 @@ class BirthdayChecker {
 
                     if (todayDate.getDate() === birthDate.getDate() && todayDate.getMonth() === birthDate.getMonth()){
                         birthdayUsers++;
+                        birthdayUserData.push({ userId, userData });
+                    }
+                }
+
+                for (const { userId, userData } of birthdayUserData){
+                    try {
+                        const member = await guild.members.fetch(userId).catch(() => null);
+                        if (!member){
+                            Log.debug(`[CRON] User ${userId} not found in guild ${guild.name}`);
+                            continue;
+                        }
+                        Log.debug(`[CRON] Found member ${member.user.displayName} (${userId}) in guild ${guild.name}`);
 
                         try {
-                            const member = await guild.members.fetch(userId).catch(() => null);
-                            if (!member){
-                                Log.debug(`[CRON] User ${userId} not found in guild ${guild.name}`);
-                                continue;
-                            }
-                            Log.debug(`[CRON] Found member ${member.user.displayName} (${userId}) in guild ${guild.name}`);
+                            const currentAge = calculateAge(userData.birthdate);
+                            if (currentAge){
+                                const newAgeRoleId = getAgeRole(currentAge);
 
-                            const currentAge = calculateAge(birthdate);
-                            if (!currentAge) continue;
-                            const newAgeRoleId = getAgeRole(currentAge);
+                                const hasCurrentAgeRole = Object.values(config.roles.ages).some(roleId =>
+                                    roleId && member.roles.cache.has(roleId),
+                                );
 
-                            const hasCurrentAgeRole = Object.values(config.roles.ages).some(roleId =>
-                                roleId && member.roles.cache.has(roleId),
-                            );
-
-                            if (newAgeRoleId && !hasCurrentAgeRole){
-                                await removeExistingAgeRoles(member);
-                                await member.roles.add(newAgeRoleId);
-                                roleUpdates++;
-                                Log.done(`[CRON] Updated age role for ${member.user.displayName} to age ${currentAge}`);
-                            }
-
-                            if (birthdayPing && config.roles.birthday){
-                                if (!member.roles.cache.has(config.roles.birthday)){
-                                    await member.roles.add(config.roles.birthday);
+                                if (newAgeRoleId && !hasCurrentAgeRole){
+                                    await removeExistingAgeRoles(member);
+                                    await member.roles.add(newAgeRoleId);
+                                    roleUpdates++;
+                                    Log.done(`[CRON] Updated age role for ${member.user.displayName} to age ${currentAge}`);
                                 }
-                                guildBirthdayUsers.push(member);
                             }
                         }
                         catch (error){
-                            Log.error(`[CRON] Error processing birthday for user ${userId} in guild ${guild.name}:`, error);
+                            Log.error(`[CRON] Error updating age role for user ${userId} in guild ${guild.name}:`, error);
                         }
+
+                        guildBirthdayUsers.push(member);
+
+                        if (userData.birthday_ping && config.roles.birthday){
+                            try {
+                                if (!member.roles.cache.has(config.roles.birthday)){
+                                    await member.roles.add(config.roles.birthday);
+                                }
+                            }
+                            catch (error){
+                                Log.error(`[CRON] Error adding birthday role for user ${userId} in guild ${guild.name}:`, error);
+                            }
+                        }
+                    }
+                    catch (error){
+                        Log.error(`[CRON] Error processing birthday for user ${userId} in guild ${guild.name}:`, error);
                     }
                 }
 
                 if (guildBirthdayUsers.length > 0 && config.channels.general && config.roles.birthday){
                     const generalChannel = await guild.channels.fetch(config.channels.general).catch(() => null);
                     if (generalChannel){
-                        const birthdayUsernames = guildBirthdayUsers.map(member => member.user.displayName).join(", ");
+                        const birthdayUsernames = guildBirthdayUsers.map(member => member.user).join(", ");
 
                         const birthdayEmbed = new EmbedBuilder()
                             .setTitle("🎂┃Geburtstag!")
@@ -274,7 +290,6 @@ class BirthdayChecker {
             const today = new Date().toDateString();
             const todayKey = `birthday_check_${today}`;
 
-            // Check if we've already processed today
             const alreadyProcessed = await db.get(todayKey);
             if (!alreadyProcessed){
                 Log.wait("[CRON] Birthday check not completed for today, running now...");
