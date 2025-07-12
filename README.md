@@ -52,6 +52,8 @@ Once the config has been copied like described in [Step 4](#wrench-setup), it ca
 | roles: <br> `birthday` | ID of the bday role | string | N/A |
 | roles: <br> `ages` | Object of all ages roles | object | {} |
 | roles: <br> `gender` | Object of all gender roles | object | {} |
+| roles: <br> `country_verified` | Object of all verified country roles | object | {} |
+| roles: <br> `country_unverified` | Object of all temp country roles | object | {} |
 | channels: <br> `general` | ID of the general chat to announce bdays | string | N/A |
 | openai: <br> `token` | OpenAI Token for Welcome Msg | string | N/A |
 | openai: <br> `model` | Which model to use for Welcome Msg | string | "gpt-4" |
