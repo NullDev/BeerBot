@@ -121,6 +121,28 @@ const cleanupVerification = async function(userId, member = null){
 };
 
 /**
+ * Handle country role transition during verification
+ *
+ * @param {import("discord.js").GuildMember} member
+ * @return {Promise<string|null>}
+ */
+const handleCountryRoleTransition = async function(member){
+    for (const [countryCode, roleId] of Object.entries(config.roles.country_unverified)){
+        if (roleId && member.roles.cache.has(roleId)){
+            await member.roles.remove(roleId);
+
+            const verifiedRoleId = config.roles.country_verified[countryCode];
+            if (verifiedRoleId){
+                await member.roles.add(verifiedRoleId);
+            }
+
+            return countryCode;
+        }
+    }
+    return null;
+};
+
+/**
  * Complete verification process
  *
  * @param {import("discord.js").User} user
@@ -139,6 +161,14 @@ const completeVerification = async function(user, member, shouldAddRole){
 
     try {
         await removeExistingAgeRoles(member);
+
+        let countryCode;
+        try {
+            countryCode = await handleCountryRoleTransition(member);
+        }
+        catch (error){
+            Log.error(`Error during country role transition for user ${user.displayName}:`, error);
+        }
 
         if (config.roles.unverified && member.roles.cache.has(config.roles.unverified)){
             await member.roles.remove(config.roles.unverified);
@@ -166,7 +196,8 @@ const completeVerification = async function(user, member, shouldAddRole){
         await cleanupVerification(userId);
 
         const dateType = isFullDate ? "Vollständiges Datum" : "Nur Jahr";
-        Log.done(`User ${user.displayName} has been verified via DM. Age: ${age}, Birthday ping: ${shouldAddRole}, Gender: ${gender}, Date type: ${dateType}`);
+        const countryText = countryCode ? `, Country: ${countryCode.toUpperCase()}` : "";
+        Log.done(`User ${user.displayName} has been verified via DM. Age: ${age}, Birthday ping: ${shouldAddRole}, Gender: ${gender}, Date type: ${dateType}${countryText}`);
 
         let genderText = "Nicht angegeben";
         if (gender === "male") genderText = "Männlich";
@@ -184,7 +215,7 @@ const completeVerification = async function(user, member, shouldAddRole){
         await gLogger(
             { user, guild: member.guild, client: member.client },
             "🔷┃Verification Log - Erfolg",
-            `Benutzer ${user} wurde erfolgreich verifiziert.\nAlter: ${age}\nGeschlecht: ${genderText}\nGeburtstag Ping: ${shouldAddRole ? "Jo" : "Na"}\nDatumstyp: ${dateType}`,
+            `Benutzer ${user} wurde erfolgreich verifiziert.\nAlter: ${age}\nGeschlecht: ${genderText}\nGeburtstag Ping: ${shouldAddRole ? "Jo" : "Na"}\nDatumstyp: ${dateType}\n${countryText}`,
         );
 
         await welcomeHandler(member);
