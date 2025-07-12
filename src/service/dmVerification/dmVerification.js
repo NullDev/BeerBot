@@ -196,8 +196,8 @@ const completeVerification = async function(user, member, shouldAddRole){
         await cleanupVerification(userId);
 
         const dateType = isFullDate ? "Vollständiges Datum" : "Nur Jahr";
-        const countryText = countryCode ? `, Country: ${countryCode.toUpperCase()}` : "";
-        Log.done(`User ${user.displayName} has been verified via DM. Age: ${age}, Birthday ping: ${shouldAddRole}, Gender: ${gender}, Date type: ${dateType}${countryText}`);
+        const countryText = countryCode ? countryCode.toUpperCase() : "";
+        Log.done(`User ${user.displayName} has been verified via DM. Age: ${age}, Birthday ping: ${shouldAddRole}, Gender: ${gender}, Date type: ${dateType}, Bundesland: ${countryText}`);
 
         let genderText = "Nicht angegeben";
         if (gender === "male") genderText = "Männlich";
@@ -215,7 +215,7 @@ const completeVerification = async function(user, member, shouldAddRole){
         await gLogger(
             { user, guild: member.guild, client: member.client },
             "🔷┃Verification Log - Erfolg",
-            `Benutzer ${user} wurde erfolgreich verifiziert.\nAlter: ${age}\nGeschlecht: ${genderText}\nGeburtstag Ping: ${shouldAddRole ? "Jo" : "Na"}\nDatumstyp: ${dateType}\n${countryText}`,
+            `Benutzer ${user} wurde erfolgreich verifiziert.\nAlter: ${age}\nGeschlecht: ${genderText}\nGeburtstag Ping: ${shouldAddRole ? "Jo" : "Na"}\nDatumstyp: ${dateType}\nBundesland: ${countryText}`,
         );
 
         await welcomeHandler(member);
