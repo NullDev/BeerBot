@@ -7,6 +7,7 @@ import { config, meta } from "../config/config.js";
 import DiscordClient from "./service/client.js";
 import clientReady from "./events/clientReady.js";
 import shardReady from "./events/shardReady.js";
+import guildMemberUpdate from "./events/guildMemberUpdate.js";
 
 // ========================= //
 // = Copyright (c) NullDev = //
@@ -72,6 +73,8 @@ client.on(Events.GuildCreate, async guild => Log.info("Joined guild: " + guild.n
 client.on(Events.GuildDelete, guild => Log.info("Left guild: " + guild.name));
 
 client.on(Events.GuildUnavailable, guild => Log.warn("Guild is unavailable: " + guild.name));
+
+client.on(Events.GuildMemberUpdate, async(oldMember, newMember) => guildMemberUpdate(oldMember, newMember));
 
 client.on(Events.Debug, info => Log.debug(info, true));
 
