@@ -69,7 +69,7 @@ const getRandomMsg = async function(){
         attempts < maxAttempts
     );
 
-    const newLastIndices = [...lastMessageIndices.slice(-2), randomIndex];
+    const newLastIndices = [...lastMessageIndices.slice(-4), randomIndex];
     await db.set("last_random_message_indices", newLastIndices);
     Log.done("Set last random message indices to " + JSON.stringify(newLastIndices));
 
