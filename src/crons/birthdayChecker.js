@@ -119,7 +119,9 @@ class BirthdayChecker {
                             Log.error(`[CRON] Error updating age role for user ${userId} in guild ${guild.name}:`, error);
                         }
 
-                        guildBirthdayUsers.push(member);
+                        if (userData.birthday_ping){
+                            guildBirthdayUsers.push(member);
+                        }
 
                         if (userData.birthday_ping && config.roles.birthday){
                             try {
