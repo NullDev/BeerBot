@@ -212,10 +212,11 @@ const completeVerification = async function(user, member, shouldAddRole){
             embeds: [successEmbed],
         });
 
+        const dateText = isFullDate ? `Geburtsdatum: ${birthdate}` : `Geburtsjahr: ${birthdate}`;
         await gLogger(
             { user, guild: member.guild, client: member.client },
             "🔷┃Verification Log - Erfolg",
-            `Benutzer ${user} wurde erfolgreich verifiziert.\nAlter: ${age}\nGeschlecht: ${genderText}\nGeburtstag Ping: ${shouldAddRole ? "Jo" : "Na"}\nDatumstyp: ${dateType}\nBundesland: ${countryText}`,
+            `Benutzer ${user} wurde erfolgreich verifiziert.\nAlter: ${age}\nGeschlecht: ${genderText}\nGeburtstag Ping: ${shouldAddRole ? "Jo" : "Na"}\nDatumstyp: ${dateType}\nBundesland: ${countryText}\n${dateText}`,
         );
 
         await welcomeHandler(member);
