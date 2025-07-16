@@ -39,7 +39,7 @@ class LogHandler {
     }
 
     /**
-     * Remove logs that are older than 7 days
+     * Remove logs that are older than 31 days
      *
      * @static
      * @memberof LogHandler
@@ -57,14 +57,14 @@ class LogHandler {
 
         const allLogs = [...logs, ...eLogs];
 
-        const sevenDaysAgoX = new Date();
-        sevenDaysAgoX.setDate(sevenDaysAgoX.getDate() - 7);
+        const thirtyOneDaysAgoX = new Date();
+        thirtyOneDaysAgoX.setDate(thirtyOneDaysAgoX.getDate() - 31);
 
-        const sevenDaysAgo = (new Date(sevenDaysAgoX.getTime() + Math.abs(sevenDaysAgoX.getTimezoneOffset() * 60000))).getTime();
+        const thirtyOneDaysAgo = (new Date(thirtyOneDaysAgoX.getTime() + Math.abs(thirtyOneDaysAgoX.getTimezoneOffset() * 60000))).getTime();
 
         await Promise.all(allLogs.map(async f => {
             const fileDateFromName = this.#getDateFromFilename(f);
-            if (!fileDateFromName || fileDateFromName < sevenDaysAgo){
+            if (!fileDateFromName || fileDateFromName < thirtyOneDaysAgo){
                 await fs.unlink(f).catch(e => Log.error(`[CRON] Could not remove old log ${f}`, e));
                 Log.done(`[CRON] Removed old log ${f}.`);
                 ++deletedLogs;
