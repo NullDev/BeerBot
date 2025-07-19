@@ -66,7 +66,8 @@ export default {
                     : "0.0";
 
                 const ageRangeDisplay = stat.ageRange.replace("_", "-").replace("+", "+");
-                responseContent += `**${ageRangeDisplay} Jahre:** ${stat.memberCount} Mitglieder (${percentage}%)\n`;
+                responseContent += `**${ageRangeDisplay} Jahre:** ${stat.memberCount} Mitglied${stat.memberCount === 1 ? "" : "er"} (${percentage}%)\n\n`;
+                responseContent += `**Summe:** ${totalMembersWithAgeRoles} Mitglieder\n`;
             }
         }
 
