@@ -25,7 +25,7 @@ const shardReady = async function(client, shard){
         if (newMemberCount !== lastMemberCount){
             lastMemberCount = newMemberCount;
             await setStatus(client, newMemberCount);
-            Log.info(`Member count changed from ${count} to ${newMemberCount} (${(newMemberCount - count) > 0 ? "+" : ""}${(newMemberCount - count)}). Updated activity.`);
+            Log.info(`Member count changed from ${lastMemberCount} to ${newMemberCount} (${(newMemberCount - lastMemberCount) > 0 ? "+" : ""}${(newMemberCount - lastMemberCount)}). Updated activity.`);
         }
     }, 10 * 60 * 1000);
 };
