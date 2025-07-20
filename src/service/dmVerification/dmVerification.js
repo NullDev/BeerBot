@@ -112,6 +112,7 @@ const cleanupVerification = async function(userId, member = null){
     await db.delete(`user-${userId}.temp_birthday_ping`);
     await db.delete(`user-${userId}.temp_gender`);
     await db.delete(`user-${userId}.unverified_join_time`);
+    await db.delete(`user-${userId}.newcomer_role_time`);
 
     if (member && config.roles.unverified && !member.roles.cache.has(config.roles.verified)){
         if (!member.roles.cache.has(config.roles.unverified)){
@@ -176,6 +177,11 @@ const completeVerification = async function(user, member, shouldAddRole){
 
         if (config.roles.verified){
             await member.roles.add(config.roles.verified);
+        }
+
+        if (config.roles.newcommer){
+            await member.roles.add(config.roles.newcommer);
+            await db.set(`user-${userId}.newcomer_role_time`, Date.now());
         }
 
         if (ageRoleId){

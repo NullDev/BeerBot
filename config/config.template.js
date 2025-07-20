@@ -4,6 +4,7 @@ export default {
         bot_owner_ids: [],
     },
     roles: {
+        newcommer: "",
         verified: "",
         birthday: "",
         unverified: "",

@@ -29,6 +29,7 @@ const guildMemberRemoveHandler = async function(member){
         await db.delete(`user-${userId}.verification_timeout`);
         await db.delete(`user-${userId}.temp_birthdate`);
         await db.delete(`user-${userId}.temp_is_full_date`);
+        await db.delete(`user-${userId}.newcomer_role_time`);
 
         Log.done(`[EVENT] User ${member.user.displayName} left guild ${member.guild.name} - removed verification data`);
 

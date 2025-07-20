@@ -54,6 +54,7 @@ class UserCleanupHandler {
                             await db.delete(`user-${userId}.verification_timeout`);
                             await db.delete(`user-${userId}.temp_birthdate`);
                             await db.delete(`user-${userId}.temp_is_full_date`);
+                            await db.delete(`user-${userId}.newcomer_role_time`);
 
                             Log.done(`[CRON] Removed user ${userId} from guild ${guild.name} - user no longer exists`);
                             removedUsers++;

@@ -34,6 +34,10 @@ const deleteUserData = async function(user, member){
             await member.roles.add(config.roles.unverified);
         }
 
+        if (config.roles.newcommer && member.roles.cache.has(config.roles.newcommer)){
+            await member.roles.remove(config.roles.newcommer);
+        }
+
         await db.delete(`user-${userId}.verified`);
         await db.delete(`user-${userId}.birthdate`);
         await db.delete(`user-${userId}.birthday_ping`);
@@ -43,6 +47,7 @@ const deleteUserData = async function(user, member){
         await db.delete(`user-${userId}.gender`);
         await db.delete(`user-${userId}.temp_birthdate`);
         await db.delete(`user-${userId}.temp_is_full_date`);
+        await db.delete(`user-${userId}.newcomer_role_time`);
 
         Log.done(`User ${user.displayName} has deleted their own data`);
 

@@ -90,6 +90,7 @@ class UnverifiedUserCleanupHandler {
                             await db.delete(`user-${memberId}.temp_age`);
                             await db.delete(`user-${memberId}.temp_birthday_ping`);
                             await db.delete(`user-${memberId}.temp_gender`);
+                            await db.delete(`user-${memberId}.newcomer_role_time`);
 
                             Log.done(`[CRON] Kicked user ${member.user.displayName} from guild ${guild.name} - not verified within 48 hours`);
                             kickedUsers++;

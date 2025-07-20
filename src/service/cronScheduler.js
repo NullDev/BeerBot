@@ -4,6 +4,7 @@ import LogHandler from "../crons/removeOldLogs.js";
 import UserCleanupHandler from "../crons/removeNonExistingUser.js";
 import BirthdayChecker from "../crons/birthdayChecker.js";
 import UnverifiedUserCleanupHandler from "../crons/removeUnverifiedUsers.js";
+import NewcomerRoleCleanupHandler from "../crons/removeNewcomerRoles.js";
 import sendRandomMsg from "../util/sendRandomMsg.js";
 
 // ========================= //
@@ -21,6 +22,7 @@ const scheduleCrons = async function(client){
         await BirthdayChecker.removeYesterdayBirthdayRoles(client);
         await BirthdayChecker.checkDailyBirthdays(client);
         await LogHandler.removeOldLogs();
+        await NewcomerRoleCleanupHandler.removeNewcomerRoles(client);
     });
 
     // yearly cron on January 1st at 00:00

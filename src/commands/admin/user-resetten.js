@@ -76,6 +76,10 @@ export default {
                 await targetMember.roles.add(config.roles.unverified);
             }
 
+            if (config.roles.newcommer && targetMember.roles.cache.has(config.roles.newcommer)){
+                await targetMember.roles.remove(config.roles.newcommer);
+            }
+
             await db.delete(`user-${targetUser.id}.verified`);
             await db.delete(`user-${targetUser.id}.birthdate`);
             await db.delete(`user-${targetUser.id}.birthday_ping`);
@@ -85,6 +89,7 @@ export default {
             await db.delete(`user-${targetUser.id}.verification_timeout`);
             await db.delete(`user-${targetUser.id}.temp_birthdate`);
             await db.delete(`user-${targetUser.id}.temp_is_full_date`);
+            await db.delete(`user-${targetUser.id}.newcomer_role_time`);
 
             Log.done(`User ${targetUser.displayName} has been reset by ${interaction.user.displayName}`);
 
