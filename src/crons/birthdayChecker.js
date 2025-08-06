@@ -169,14 +169,14 @@ class BirthdayChecker {
     }
 
     /**
-     * Remove birthday roles from yesterday's birthdays
+     * Remove birthday roles from users whose birthday is not today
      *
      * @static
      * @param {import("../service/client.js").default} client
      * @memberof BirthdayChecker
      */
     static async removeYesterdayBirthdayRoles(client){
-        Log.wait("[CRON] Removing yesterday's birthday roles...");
+        Log.wait("[CRON] Removing birthday roles from users whose birthday is not today...");
 
         let removedRoles = 0;
 
@@ -196,19 +196,18 @@ class BirthdayChecker {
 
                     if (!/^\d{1,2}\.\d{1,2}\.\d{4}$/.test(birthdate)) continue;
 
-                    const yesterday = new Date();
-                    yesterday.setDate(yesterday.getDate() - 1);
+                    const today = new Date();
                     const birthDate = new Date(birthdate.split(".").reverse().join("-"));
 
-                    if (yesterday.getDate() === birthDate.getDate() && yesterday.getMonth() === birthDate.getMonth()){
+                    if (today.getDate() !== birthDate.getDate() || today.getMonth() !== birthDate.getMonth()){
                         await member.roles.remove(config.roles.birthday).catch(() => null);
                         removedRoles++;
-                        Log.done(`[CRON] Removed birthday role from ${member.user.displayName}`);
+                        Log.done(`[CRON] Removed birthday role from ${member.user.displayName} (not their birthday today)`);
                     }
                 }
             }
 
-            Log.done(`[CRON] Removed ${removedRoles} birthday roles from yesterday's birthdays.`);
+            Log.done(`[CRON] Removed ${removedRoles} birthday roles from users whose birthday is not today.`);
         }
         catch (error){
             Log.error("[CRON] Error in removeYesterdayBirthdayRoles:", error);
