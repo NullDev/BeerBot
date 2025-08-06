@@ -63,6 +63,7 @@ const scheduleCrons = async function(client){
     await LogHandler.removeOldLogs();
     await UserCleanupHandler.removeNonExistingUsers(client);
     await BirthdayChecker.checkStartupBirthdays(client);
+    await BirthdayChecker.removeYesterdayBirthdayRoles(client);
 };
 
 export default scheduleCrons;
