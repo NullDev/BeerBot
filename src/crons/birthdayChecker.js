@@ -142,7 +142,7 @@ class BirthdayChecker {
                 if (guildBirthdayUsers.length > 0 && config.channels.general && config.roles.birthday){
                     const generalChannel = await guild.channels.fetch(config.channels.general).catch(() => null);
                     if (generalChannel){
-                        const birthdayUsernames = guildBirthdayUsers.map(member => member.user).join(", ");
+                        const birthdayUsernames = guildBirthdayUsers.map(member => member.user.username).join(", ");
 
                         const birthdayEmbed = new EmbedBuilder()
                             .setTitle("🎂┃Geburtstag!")
