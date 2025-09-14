@@ -31,6 +31,7 @@ export default {
             kt: "",
             tr: "",
             vb: "",
+            other: "",
         },
         country_unverified: {
             oo: "",
@@ -42,6 +43,7 @@ export default {
             kt: "",
             tr: "",
             vb: "",
+            other: "",
         },
     },
     channels: {
