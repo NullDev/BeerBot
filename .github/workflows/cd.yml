@@ -37,8 +37,6 @@ jobs:
         #   node scripts/pull-and-restart.js ${{ secrets.PM2_HOME }}
         script: |
           cd ${{ secrets.REPO_PATH }}
-          pwd
-          ls scripts
           chmod +x scripts/pull-and-restart.sh
           bash scripts/pull-and-restart.sh
           screen -list
