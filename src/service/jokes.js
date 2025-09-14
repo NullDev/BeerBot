@@ -10,8 +10,6 @@
  */
 const jokes = async function(message){
     const msg = message.content.toLowerCase().replace(/[^a-z0-9öäüß ]/g, "").trim();
-    console.log(msg);
-    console.log(message.content);
 
     if (msg.startsWith("prost")){
         await message.react("🍻").catch(() => {});
