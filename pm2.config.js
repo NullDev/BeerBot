@@ -7,6 +7,7 @@ module.exports = {
     interpreter: "bun",
     env: {
         PATH: `${process.env.HOME}/.bun/bin:${process.env.PATH}`,
+        NODE_ENV: "production",
     },
     repo: "https://github.com/NullDev/BeerBot.git",
     ref: "origin/master",
