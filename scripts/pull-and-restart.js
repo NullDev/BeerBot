@@ -6,7 +6,7 @@ import { exec } from "node:child_process";
 // = Copyright (c) NullDev = //
 // ========================= //
 
-const ecosystemPath = path.resolve("./pm2.ecosystem.json");
+const ecosystemPath = path.resolve("./pm2.config.js");
 const customPm2Home = process.argv[2];
 
 const pm2 = !!customPm2Home
