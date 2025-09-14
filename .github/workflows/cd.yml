@@ -1,0 +1,37 @@
+name: cd
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - master
+    paths-ignore:
+      - './.github/**'
+      - './data/**'
+      - README.md
+      - LICENSE
+      - '.gitignore'
+      - '.gitattributes'
+      - '.editorconfig'
+
+jobs:
+  deploy:
+    name: Deploy
+    runs-on: ubuntu-latest
+    concurrency: production
+    environment:
+      name: Production
+
+    if: ${{ !github.event.repository.fork }}
+
+    steps:
+    - name: Deploy BeerBot
+      uses: appleboy/ssh-action@v1
+      with:
+        host: ${{ secrets.SSH_HOST }}
+        username: ${{ secrets.SSH_USERNAME }}
+        key: ${{ secrets.SSH_KEY }}
+        port: ${{ secrets.SSH_PORT }}
+        script: |
+          cd ${{ secrets.REPO_PATH }}
+          git pull
+          node scripts/pull-and-restart.js ${{ secrets.PM2_HOME }}
