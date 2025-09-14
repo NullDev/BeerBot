@@ -31,7 +31,12 @@ jobs:
         username: ${{ secrets.SSH_USERNAME }}
         key: ${{ secrets.SSH_KEY }}
         port: ${{ secrets.SSH_PORT }}
+        # script: |
+        #   cd ${{ secrets.REPO_PATH }}
+        #   git pull
+        #   node scripts/pull-and-restart.js ${{ secrets.PM2_HOME }}
         script: |
           cd ${{ secrets.REPO_PATH }}
-          git pull
-          node scripts/pull-and-restart.js ${{ secrets.PM2_HOME }}
+          chmod +x scripts/deploy-with-screen.sh
+          bash scripts/deploy-with-screen.sh
+          screen -list
