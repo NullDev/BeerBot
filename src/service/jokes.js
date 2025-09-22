@@ -8,7 +8,7 @@
  * @param {string} message
  * @return {boolean}
  */
-const volumeDown = function(message){
+const tooLoud = function(message){
     const individualCharacters = message.split("").filter((a) => !a.match(/\s/));
     if (message.indexOf(" ") === -1) return false;
     const uppercaseCharacters = individualCharacters.filter((a) =>
@@ -31,7 +31,7 @@ const jokes = async function(message){
         await message.react("🍻").catch(() => {});
     }
 
-    if (volumeDown(msg)){
+    if (tooLoud(msg)){
         const responses = [
             "NED SO LAUT! Sonst bekommt Opi noch an Herzinfarkt <:kek:1398084145074278400>",
             "HEAST AUF ZUM SCHREIN! Des is ned gut für meinen Blutdruck <:okay:1392840354004205618>",
