@@ -17,8 +17,8 @@ import sendRandomMsg from "../util/sendRandomMsg.js";
  * @param {import("../service/client.js").default} client
  */
 const scheduleCrons = async function(client){
-    // daily cron at 00:00
-    cron.schedule("0 0 * * *", async() => {
+    // daily cron at 00:05
+    cron.schedule("5 0 * * *", async() => {
         await BirthdayChecker.removeYesterdayBirthdayRoles(client);
         await BirthdayChecker.checkDailyBirthdays(client);
         await LogHandler.removeOldLogs();
