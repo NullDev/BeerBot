@@ -1,10 +1,15 @@
 import { ChannelType } from "discord.js";
 import { handleDMVerification } from "../service/dmVerification/dmVerification.js";
 import jokes from "../service/jokes.js";
+import { OrganicMarkov } from "../ai/Markov.js";
+import { config } from "../../config/config.js";
 
 // ========================= //
 // = Copyright (c) NullDev = //
 // ========================= //
+
+const brain = new OrganicMarkov({ order: 2 });
+await brain.init();
 
 /**
  * Handle messageCreate event
@@ -20,6 +25,28 @@ const messageCreateHandler = async function(message){
 
     else if (message.channel.type === ChannelType.GuildText && !message.author.bot){
         await jokes(message);
+
+        const channelId = message.channel.id;
+        if (message.content?.trim().startsWith("!!MKDEV ")){
+            const query = message.content.trim().substring(8).trim();
+
+            const reply = await brain.generateSentence(query, {
+                maxLen: 140,
+                similarityThreshold: 0.22,
+                temperature: 0.55,
+            });
+
+            if (reply) await message.reply({ content: reply.slice(0, 1800) });
+        }
+        else if (config.ai_included_channels.includes(channelId)){
+            brain.learn({
+                id: message.id,
+                content: message.content ?? "", // @ts-ignore
+                authorId: message.author.id,
+                replyToId: message.reference?.messageId ?? null,
+                timestamp: message.createdTimestamp,
+            });
+        }
     }
 };
 
