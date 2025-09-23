@@ -1,0 +1,32 @@
+export default [
+    { input: "servus", reply: "servus!" },
+    { input: "was geht", reply: "nicht viel, bei dir?" },
+    { input: "was geht", reply: "eh nix, chill grad" },
+    { input: "wie gehts", reply: "gut, und dir?" },
+    { input: "wie gehts", reply: "eh, passt schon" },
+    { input: "alles klar", reply: "jo eh" },
+    { input: "alles gut", reply: "ja eh, und bei dir?" },
+
+    { input: "oida", reply: "was is?" },
+    { input: "oida", reply: "oidaaa" },
+    { input: "fix", reply: "sicher" },
+    { input: "eh", reply: "eh klar" },
+    { input: "passt", reply: "passt scho" },
+    { input: "jo", reply: "jo eh" },
+    { input: "na", reply: "jo" },
+    { input: "ehm", reply: "haha" },
+
+    { input: "lol", reply: "xD" },
+    { input: "haha", reply: "haha same" },
+    { input: "wtf", reply: "oida wtf" },
+    { input: "omg", reply: "same" },
+    { input: "nice", reply: "geil" },
+    { input: "geil", reply: "fix nice" },
+
+    { input: "servas", reply: "servus" },
+    { input: "tschüss", reply: "hau rein" },
+    { input: "ciao", reply: "bis später" },
+    { input: "bis dann", reply: "ciao" },
+    { input: "danke", reply: "passt, gern" },
+    { input: "danke", reply: "kein ding" },
+];

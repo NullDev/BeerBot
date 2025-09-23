@@ -573,4 +573,37 @@ export class OrganicMarkov {
         }
         return Math.floor(Math.random() * replies.length);
     }
+
+    /**
+     * Seed the database with initial conversational pairs
+     *
+     * @param {Array<{input: string, reply: string}>} seedData
+     * @return {Promise<void>}
+     * @memberof OrganicMarkov
+     */
+    async seedDatabase(seedData){
+        const ts = Date.now();
+        for (const pair of seedData){
+            const cleanIn = this.cleanText(pair.input);
+            const cleanOut = this.cleanText(pair.reply);
+            if (!cleanIn || !cleanOut) continue;
+
+            const inId = "seed_in_" + cleanIn;
+            const outId = "seed_out_" + cleanOut;
+
+            this.db.run(
+                "INSERT OR REPLACE INTO messages (id, channelId, content, authorId, replyToId, ts) VALUES (?, ?, ?, ?, ?, ?)",
+                [inId, "seed", cleanIn, "seed", null, ts],
+            );
+            this.db.run(
+                "INSERT OR REPLACE INTO messages (id, channelId, content, authorId, replyToId, ts) VALUES (?, ?, ?, ?, ?, ?)",
+                [outId, "seed", cleanOut, "seed", inId, ts],
+            );
+
+            const key = this.canonicalKey(cleanIn);
+            this.addPair(key, cleanOut, ts);
+            await this.trainMarkov(cleanIn);
+            await this.trainMarkov(cleanOut);
+        }
+    }
 }

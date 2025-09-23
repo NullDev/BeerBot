@@ -3,6 +3,7 @@ import { handleDMVerification } from "../service/dmVerification/dmVerification.j
 import jokes from "../service/jokes.js";
 import { OrganicMarkov } from "../ai/Markov.js";
 import { config } from "../../config/config.js";
+import seed from "../ai/seed.js";
 
 // ========================= //
 // = Copyright (c) NullDev = //
@@ -37,6 +38,10 @@ const messageCreateHandler = async function(message){
             });
 
             if (reply) await message.reply({ content: reply.slice(0, 1800) });
+        }
+        if (message.content?.trim() === "!!SEEDDB"){
+            await brain.seedDatabase(seed);
+            await message.reply({ content: "Seeded database with initial conversational pairs.", options: { ephemeral: true } });
         }
         else if (config.ai_included_channels.includes(channelId)){
             brain.learn({
