@@ -26,6 +26,7 @@ export class OrganicMarkov {
      * @param {number} [opts.maxPairsPerKey]
      * @param {number} [opts.maxVocabulary]
      * @param {Set<string>} [opts.stopwords]
+     * @param {number} [opts.lookbackWindow]
      * @memberof OrganicMarkov
      */
     constructor(opts = {}){
@@ -35,6 +36,7 @@ export class OrganicMarkov {
         this.maxPairsPerKey = opts.maxPairsPerKey ?? 50;
         this.maxVocabulary = opts.maxVocabulary ?? 20000;
         this.stopwords = opts.stopwords ?? defaultStopwords;
+        this.lookbackWindow = opts.lookbackWindow ?? 5;
 
         this.db = new BunDB("./data/brain.sqlite");
         this.lastMsgByChannel = new Map(); // track last non-bot message for sequential pairing
@@ -43,6 +45,7 @@ export class OrganicMarkov {
     async init(){
         this.db.run(`CREATE TABLE IF NOT EXISTS messages (
             id TEXT PRIMARY KEY,
+            channelId TEXT,
             content TEXT,
             authorId TEXT,
             replyToId TEXT,
@@ -93,8 +96,10 @@ export class OrganicMarkov {
             }
         }
 
-        // @ts-ignore
-        this.db.run("INSERT OR REPLACE INTO messages (id, content, authorId, replyToId, ts) VALUES (?, ?, ?, ?, ?)", [msg.id, clean, msg.authorId, msg.replyToId ?? null, ts]);
+        this.db.run(
+            "INSERT OR REPLACE INTO messages (id, channelId, content, authorId, replyToId, ts) VALUES (?, ?, ?, ?, ?, ?)", // @ts-ignore
+            [msg.id, msg.channelId, clean, msg.authorId, msg.replyToId ?? null, ts],
+        );
 
         await this.trainMarkov(clean);
 
@@ -107,12 +112,49 @@ export class OrganicMarkov {
             }
         }
         else if (msg.channelId){
-            const last = this.lastMsgByChannel.get(msg.channelId); // @ts-ignore
-            if (last && last.authorId !== msg.authorId){
-                const key = this.canonicalKey(last.content);
+            const rows = this.db.query(
+                "SELECT id, content, authorId, ts FROM messages WHERE channelId = ? ORDER BY ts DESC LIMIT ?",
+            ).all(msg.channelId, this.lookbackWindow);
+
+            let best = null;
+            let bestScore = 0;
+            const queryToks = this.tokenize(clean);
+            const qTf = this.termFreq(queryToks);
+            const qVec = new Map();
+            for (const [term, tf] of qTf){
+                const idf = this.idf(term);
+                if (idf > 0) qVec.set(term, tf * idf);
+            }
+            const qNorm = this.vecNorm(qVec);
+
+            for (const r of rows){ // @ts-ignore
+                if (r.authorId === msg.authorId) continue; // skip self
+                const dToks = this.tokenize(r.content);
+                const dTf = this.termFreq(dToks);
+                let dot = 0; let dSq = 0;
+                for (const [term, tf] of dTf){
+                    const idf = this.idf(term);
+                    if (idf <= 0) continue;
+                    const w = tf * idf;
+                    dSq += w * w;
+                    const qv = qVec.get(term);
+                    if (qv) dot += qv * w;
+                }
+                const denom = Math.sqrt(dSq) * qNorm;
+                if (denom === 0) continue;
+                const score = dot / denom;
+                if (score > bestScore){
+                    bestScore = score;
+                    best = r;
+                }
+            }
+
+            if (best){
+                const key = this.canonicalKey(best.content);
                 if (key) this.addPair(key, clean, ts);
-            } // @ts-ignore
-            this.lastMsgByChannel.set(msg.channelId, { content: clean, authorId: msg.authorId, ts });
+            }
+            // @ts-ignore
+            this.lastMsgByChannel.set(msg.channelId, { id: msg.id, content: clean, authorId: msg.authorId, ts });
         }
     }
 
