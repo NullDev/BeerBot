@@ -27,8 +27,8 @@ const messageCreateHandler = async function(message){
     else if (message.channel.type === ChannelType.GuildText && !message.author.bot){
         await jokes(message);
 
-        const channelId = message.channel.id;
-        if (message.content?.trim().startsWith("!!MKDEV ")){
+        const channelId = message.channel.id; // @ts-ignore
+        if (config.discord.bot_owner_ids.includes(message.author.id) && message.content?.trim().startsWith("!!MKDEV ")){
             const query = message.content.trim().substring(8).trim();
 
             const reply = await brain.generateSentence(query, {
@@ -39,7 +39,8 @@ const messageCreateHandler = async function(message){
 
             if (reply) await message.reply({ content: reply.slice(0, 1800) });
         }
-        if (message.content?.trim() === "!!SEEDDB"){
+        // @ts-ignore
+        if (config.discord.bot_owner_ids.includes(message.author.id) && message.content?.trim() === "!!SEEDDB"){
             await brain.seedDatabase(seed);
             await message.reply({ content: "Seeded database with initial conversational pairs.", options: { ephemeral: true } });
         }
