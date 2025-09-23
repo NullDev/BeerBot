@@ -84,11 +84,11 @@ export class OrganicMarkov {
             const last = this.lastMsgByChannel.get(msg.channelId);
             if (
                 last // @ts-ignore
-            && last.authorId === msg.authorId // @ts-ignore
-            && !msg.replyToId && !last.replyToId
-            && (ts - last.ts < 5000)
+                && last.authorId === msg.authorId // @ts-ignore
+                && !msg.replyToId && !last.replyToId
+                && (ts - last.ts < 5000)
             ){
-            // merge into previous message
+                // merge into previous message
                 const merged = (last.content + " " + clean).trim();
                 this.db.run("UPDATE messages SET content = ?, ts = ? WHERE id = ?", [merged, ts, last.id]);
                 this.lastMsgByChannel.set(msg.channelId, { ...last, content: merged, ts });
@@ -188,10 +188,9 @@ export class OrganicMarkov {
             const pool = this.db.query("SELECT reply, ts FROM pairs WHERE parentKey = ?").all(bestKey);
             if (pool && pool.length){
                 const replies = pool.map(r => r.reply);
-                const tsArr = pool.map(r => r.ts);
 
-                // sometimes remix with micro-markov for variety
-                if (replies.length >= 3 && Math.random() < 0.4){
+                // 70%: micro-Markov remix from replies
+                if (replies.length >= 2 && Math.random() < 0.7){
                     const micro = new MicroMarkov(this.order);
                     for (const r of replies) micro.train(r);
                     let out = micro.sample(opts.maxLen, opts.temperature);
@@ -199,13 +198,24 @@ export class OrganicMarkov {
                     if (out) return out;
                 }
 
-                const idx = this.sampleWeightedIndex(replies, tsArr, now);
-                let out = replies[idx];
-                out = this.polish(out, opts);
-                return out;
+                // 20%: verbatim reply
+                if (Math.random() < 0.2){
+                    const idx = this.sampleWeightedIndex(
+                        replies,
+                        pool.map(r => r.ts),
+                        now,
+                    );
+                    let out = replies[idx];
+                    out = this.polish(out, opts);
+                    if (out) return out;
+                }
+
+                // fallback: seed the global Markov with the input
+                return await this.markovSample(query, opts);
             }
         }
 
+        // No candidates -> pure global Markov
         return await this.markovSample(query, opts);
     }
 
