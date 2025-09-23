@@ -260,10 +260,11 @@ export class OrganicMarkov {
     cleanText(s){
         if (!s) return "";
         let t = s;
-        t = t.replace(/```[\s\S]*?```/g, " ").replace(/`[^`]*`/g, " ");
-        t = t.replace(/https?:\/\/[\w.-]+(?:\/[\w\-._~:/?#[\]@!$&'()*+,;=.]+)?/gi, " ");
-        t = t.replace(/<@&?\d+>/g, " ").replace(/<#!?\d+>/g, " ");
-        t = t.replace(/[\n\r]+/g, " ").replace(/\s{2,}/g, " ").trim();
+        t = t.replace(/```[\s\S]*?```/g, " ").replace(/`[^`]*`/g, " "); // code blocks
+        t = t.replace(/https?:\/\/[\w.-]+(?:\/[\w\-._~:/?#[\]@!$&'()*+,;=.]+)?/gi, " "); // URLs
+        t = t.replace(/<@&?\d+>/g, " ").replace(/<#!?\d+>/g, " "); // mentions
+        t = t.replace(/<a?:\w+:\d+>/g, " "); // custom emoji
+        t = t.replace(/[\n\r]+/g, " ").replace(/\s{2,}/g, " ").trim(); // whitespace
         if (this.lowercase) t = t.toLowerCase();
         return t;
     }
