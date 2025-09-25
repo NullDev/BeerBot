@@ -2,8 +2,9 @@ import { ChannelType } from "discord.js";
 import { handleDMVerification } from "../service/dmVerification/dmVerification.js";
 import jokes from "../service/jokes.js";
 import { OrganicMarkov } from "../ai/Markov.js";
+import { PythonAIWorker } from "../ai/getAiReply.js";
+import Log from "../util/log.js";
 import { config } from "../../config/config.js";
-import seed from "../ai/seed.js";
 
 // ========================= //
 // = Copyright (c) NullDev = //
@@ -11,6 +12,8 @@ import seed from "../ai/seed.js";
 
 const brain = new OrganicMarkov({ order: 2 });
 await brain.init();
+
+const aiWorker = new PythonAIWorker();
 
 /**
  * Handle messageCreate event
@@ -30,19 +33,14 @@ const messageCreateHandler = async function(message){
         const channelId = message.channel.id; // @ts-ignore
         if (config.discord.bot_owner_ids.includes(message.author.id) && message.content?.trim().startsWith("!!MKDEV ")){
             const query = message.content.trim().substring(8).trim();
-
-            const reply = await brain.generateSentence(query, {
-                maxLen: 140,
-                similarityThreshold: 0.22,
-                temperature: 0.55,
-            });
-
-            if (reply) await message.reply({ content: reply.slice(0, 1800) });
-        }
-        // @ts-ignore
-        if (config.discord.bot_owner_ids.includes(message.author.id) && message.content?.trim() === "!!SEEDDB"){
-            await brain.seedDatabase(seed);
-            await message.reply({ content: "Seeded database with initial conversational pairs.", options: { ephemeral: true } });
+            try {
+                const reply = await aiWorker.infer(query);
+                await message.reply(reply);
+            }
+            catch (err){
+                Log.error("[AIWorker] Inference error:", err);
+                await message.reply("Fehler: Bot moch grod ned so beep boop wie er soll... Frag Shadow warum er nix kann");
+            }
         }
         else if (config.ai_included_channels.includes(channelId)){
             brain.learn({
