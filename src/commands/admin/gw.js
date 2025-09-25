@@ -4,6 +4,7 @@ import {
     MessageFlags,
     InteractionContextType,
 } from "discord.js";
+import Log from "../../util/log.js";
 
 // ========================= //
 // = Copyright (c) NullDev = //
@@ -41,7 +42,8 @@ export default {
         const replyId = interaction.options.getString("replyid");
 
         try {
-            const { channel } = interaction;
+            // eslint-disable-next-line prefer-destructuring
+            const channel = /** @type {import("discord.js").TextChannel} */ (interaction.channel);
             if (!channel || !channel.isTextBased()){
                 await interaction.editReply("❌ Konnte den Channel nicht finden.");
                 return;
@@ -88,7 +90,7 @@ export default {
             }
         }
         catch (err){
-            console.error(err);
+            Log.error("gw failed: ", err);
             await interaction.editReply("❌ Fehler beim Senden.");
         }
     },
