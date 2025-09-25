@@ -2,7 +2,7 @@
 import babelParser from "@babel/eslint-parser";
 
 export default [{                           // NullDev-Style ESLint Config: https://github.com/NullDevCo/JavaScript-Styleguide
-    ignores: ["dist", "node_modules"],      // Ignore dist folders and dependencies
+    ignores: ["dist", "node_modules", ".venv"],
     files: ["**/*.js", "**/*.jsx"],
     plugins: {},                            // Additional ESLint Plugins
     languageOptions: {

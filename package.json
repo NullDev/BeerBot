@@ -11,9 +11,10 @@
     "start:dev": "bun run lint && cross-env NODE_ENV=development bun src/app.js",
     "start:prod": "cross-env NODE_ENV=production bun src/app.js",
     "start": "bun run start:dev",
-    "lint": "eslint .",
+    "lint": "eslint . --ignore-pattern .venv",
     "lint:fix": "eslint . --fix",
-    "generate-config": "bun scripts/generate-config.js"
+    "generate-config": "bun scripts/generate-config.js",
+    "export-db": "bun scripts/export-db.js"
   },
   "devDependencies": {
     "@babel/core": "^7.27.7",
