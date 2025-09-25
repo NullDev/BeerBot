@@ -7,6 +7,10 @@ config/config.custom.js
 # DB
 data/*.sqlite
 
+# Ignore AI files except .gitkeep
+data/ai/**
+!data/ai/.gitkeep
+
 # output
 out
 dist
@@ -38,3 +42,6 @@ report.[0-9]_.[0-9]_.[0-9]_.[0-9]_.json
 
 # Finder (MacOS) folder config
 .DS_Store
+
+# Py stuff
+__pycache__/

@@ -48,7 +48,7 @@ const commandRegister = async function(client){
         const data = await rest.put(Routes.applicationCommands(client.user?.id || ""), {
             body: cmdMap,
         });
-        Log.done("Successfully reloaded " + /** @type {Array} */ (data).length + " application (/) commands.");
+        Log.done("Successfully reloaded " + /** @type {Array<any>} */ (data).length + " application (/) commands.");
     }
     catch (error){
         Log.error("Error during registering of application (/) commands: " + error);
