@@ -32,6 +32,7 @@ const handleCountryRoleTransition = async function(member){
         if (roleId && member.roles.cache.has(roleId)){
             await member.roles.remove(roleId);
 
+            // @ts-ignore
             const verifiedRoleId = config.roles.country_verified[countryCode];
             if (verifiedRoleId){
                 await member.roles.add(verifiedRoleId);
