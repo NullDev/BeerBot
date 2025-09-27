@@ -24,6 +24,8 @@ const tooLoud = function(message){
  * @return {Promise<void>}
  */
 const jokes = async function(message){
+    if (message.mentions.has(message.client.user)) return;
+
     const msg = message.content.trim();
     const cleanedMsg = msg.toLowerCase().replace(/[^a-z0-9öäüß ]/g, "").trim();
 
