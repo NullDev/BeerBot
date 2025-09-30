@@ -7,7 +7,7 @@ from torch.utils.data import Dataset, DataLoader
 import sentencepiece as spm
 import warnings
 
-from t_helpers import Seq2Seq
+from train_helpers import Seq2Seq
 
 # ========================= #
 # = Copyright (c) NullDev = #
