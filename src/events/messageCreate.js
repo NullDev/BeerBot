@@ -39,7 +39,7 @@ const messageCreateHandler = async function(message){
         await jokes(message);
 
         const channelId = message.channel.id; // @ts-ignore
-        if (config.discord.bot_owner_ids.includes(message.author.id) && message.mentions.has(message.client.user)){
+        if (message.mentions.has(message.client.user)){
             if (message.content.trim() === `<@!${message.client.user?.id}>`) return;
             const query = cleanMsg(message);
             message.channel.sendTyping();
