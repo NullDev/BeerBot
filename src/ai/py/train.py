@@ -3,11 +3,11 @@ from typing import List, Tuple
 import torch
 import torch.nn as nn
 import torch.optim as optim
-from torch.utils.data import Dataset, DataLoader
+from torch.utils.data import DataLoader
 import sentencepiece as spm
 import warnings
 
-from train_helpers import Seq2Seq
+from train_helpers import Seq2Seq, Chatset
 
 # ========================= #
 # = Copyright (c) NullDev = #
@@ -18,7 +18,7 @@ MODEL_DIR   = "./data/ai"
 os.makedirs(MODEL_DIR, exist_ok=True)
 
 # hyperparams
-VOCAB_SIZE = 160000
+VOCAB_SIZE = 8000
 MAXLEN     = 32
 EMBED      = 256
 HIDDEN     = 256
@@ -68,8 +68,8 @@ def build_tokenizer(pairs: List[Tuple[str, str]]):
         input=corpus,
         model_prefix=os.path.join(MODEL_DIR, "spm"),
         vocab_size=VOCAB_SIZE,
-        model_type="bpe",
-        character_coverage=1.0,
+        model_type="unigram",
+        character_coverage=0.9995,
         # explicit special IDs (PAD=0, UNK=1, BOS=2, EOS=3)
         pad_id=0, unk_id=1, bos_id=2, eos_id=3,
         pad_piece="<pad>", unk_piece="<unk>", bos_piece="<s>", eos_piece="</s>",
@@ -81,27 +81,18 @@ def build_tokenizer(pairs: List[Tuple[str, str]]):
     sp = spm.SentencePieceProcessor(model_file=os.path.join(MODEL_DIR, "spm.model"))
     return sp
 
-class Chatset(Dataset):
-    def __init__(self, pairs: List[Tuple[str, str]], sp: spm.SentencePieceProcessor):
-        self.data = []
-        self.sp = sp
-        self.PAD, self.BOS, self.EOS = sp.pad_id(), sp.bos_id(), sp.eos_id()
-        for s, t in pairs:
-            src = [self.BOS] + sp.encode(s, out_type=int)[:MAXLEN-2] + [self.EOS]
-            tgt = [self.BOS] + sp.encode(t, out_type=int)[:MAXLEN-2] + [self.EOS]
-            self.data.append((src, tgt))
-
-    def __len__(self): return len(self.data)
-    def __getitem__(self, i): return self.data[i]
-
-def collate(batch, pad_id=0):
+def collate(batch, pad_id):
     srcs, tgts = zip(*batch)
     maxs = max(len(s) for s in srcs)
     maxt = max(len(t) for t in tgts)
-    def pad(x, m): return x + [pad_id]*(m - len(x))
-    src = torch.tensor([pad(s, maxs) for s in srcs], dtype=torch.long)
-    tgt = torch.tensor([pad(t, maxt) for t in tgts], dtype=torch.long)
-    return src, tgt
+
+    def pad_to(x, m): return x + [pad_id] * (m - len(x))
+
+    src = torch.tensor([pad_to(s, maxs) for s in srcs], dtype=torch.long)
+    tgt = torch.tensor([pad_to(t, maxt) for t in tgts], dtype=torch.long)
+
+    src_mask = (src != pad_id) # (B, T_src) bool
+    return src, tgt, src_mask
 
 def main():
     if not os.path.exists(DATA_JSONL):
@@ -115,22 +106,25 @@ def main():
     PAD, BOS, EOS = sp.pad_id(), sp.bos_id(), sp.eos_id()
     vocab_size = sp.get_piece_size()
 
-    dataset = Chatset(pairs, sp)
-    loader  = DataLoader(dataset, batch_size=BATCH, shuffle=True, collate_fn=lambda b: collate(b, pad_id=PAD))
+    dataset = Chatset(pairs, sp, MAXLEN)
+    loader = DataLoader(dataset, batch_size=BATCH, shuffle=True, collate_fn=lambda b: collate(b, pad_id=PAD))
 
     model = Seq2Seq(vocab_size, EMBED, HIDDEN, LAYERS, PAD).to(DEVICE)
-    model.dec_train.fc.weight = model.dec_train.emb.weight
-    opt   = optim.Adam(model.parameters(), lr=LR)
-    crit  = nn.CrossEntropyLoss(ignore_index=PAD, label_smoothing=0.1)
+    opt = optim.Adam(model.parameters(), lr=LR)
 
     model.train()
     for ep in range(1, EPOCHS+1):
         tot = 0.0
-        for src, tgt in loader:
-            src, tgt = src.to(DEVICE), tgt.to(DEVICE)
-            dec_in, dec_out = tgt[:, :-1], tgt[:, 1:] # teacher forcing
-            logits = model(src, dec_in)               # (B,T,V)
-            loss = crit(logits.reshape(-1, vocab_size), dec_out.reshape(-1))
+        for src, tgt, src_mask in loader:
+            src, tgt, src_mask = src.to(DEVICE), tgt.to(DEVICE), src_mask.to(DEVICE)
+            tgt_in = tgt[:, :-1]
+            tgt_out = tgt[:, 1:]
+            logits = model(src, src_mask, tgt_in) # (B, T_dec, V)
+            loss = nn.functional.cross_entropy(
+                logits.reshape(-1, logits.size(-1)),
+                tgt_out.reshape(-1),
+                ignore_index=PAD
+            )
             opt.zero_grad()
             loss.backward()
             torch.nn.utils.clip_grad_norm_(model.parameters(), max_norm=1.0)
@@ -138,57 +132,69 @@ def main():
             tot += loss.item()
         print(f"Epoch {ep}/{EPOCHS}  loss={tot/len(loader):.4f}")
 
+    # export ONNX Encoder: src -> (h, c)
+    print("Exporting ONNX (encoder/decoder)...")
+    model = model.to("cpu").eval()
+
     # save torch weights for future fine-tuning (?)
     torch.save(model.state_dict(), os.path.join(MODEL_DIR, "model.pt"))
 
-    # export ONNX Encoder: src -> (h, c)
-    print("Exporting ONNX (encoder/decoder)...")
-    model.eval()
-    dummy_src = torch.randint(low=1, high=vocab_size, size=(1, MAXLEN), dtype=torch.long).to(DEVICE)
-    h, c = model.enc(dummy_src)
+    dummy_src = torch.randint(0, vocab_size, (1, 8), dtype=torch.long)
+    enc_outs, h, c = model.enc(dummy_src)
 
     torch.onnx.export(
         model.enc, (dummy_src,),
         os.path.join(MODEL_DIR, "encoder.onnx"),
-        input_names  = ["src"],
-        output_names = ["h", "c"],
-        dynamic_axes = {
-            "src": {0: "B", 1: "T"},
-            "h":   {1: "B"},
-            "c":   {1: "B"}
+        input_names=["src"],
+        output_names=["enc_outs", "h", "c"],
+        dynamic_axes={
+            "src": {0: "B", 1: "Tsrc"},
+            "enc_outs": {0: "B", 1: "Tsrc"},
+            "h": {1: "B"},
+            "c": {1: "B"},
         },
-        opset_version=17,
-        # dynamo=True
+        opset_version=17
     )
 
     # Export ONNX DecoderStep: (y_prev, h_in, c_in) -> (logits, h_out, c_out)
-    dummy_y = torch.randint(low=1, high=vocab_size, size=(1, 1), dtype=torch.long).to(DEVICE)
-    dummy_h = torch.zeros(LAYERS, 1, HIDDEN, dtype=torch.float32).to(DEVICE)
-    dummy_c = torch.zeros(LAYERS, 1, HIDDEN, dtype=torch.float32).to(DEVICE)
+    dummy_y   = torch.zeros(1, dtype=torch.long)
+    dummy_h   = torch.zeros_like(h)
+    dummy_c   = torch.zeros_like(c)
+    dummy_outs= torch.zeros_like(enc_outs)
+    dummy_msk = torch.ones((1, enc_outs.size(1)), dtype=torch.bool)
 
     # tie weights from training decoder to step decoder
     model.dec_step.emb.weight.data.copy_(model.dec_train.emb.weight.data)
-    for (n1, p1), (n2, p2) in zip(model.dec_step.lstm.named_parameters(), model.dec_train.lstm.named_parameters()):
+    for (_, p1), (_, p2) in zip(model.dec_step.lstm.named_parameters(), model.dec_train.lstm.named_parameters()):
         if p1.shape == p2.shape:
             p1.data.copy_(p2.data)
-    model.dec_step.fc.weight.data.copy_(model.dec_train.fc.weight.data)
-    model.dec_step.fc.bias.data.copy_(model.dec_train.fc.bias.data)
+
+    # tie attention Wa
+    model.dec_step.attn.Wa.weight.data.copy_(model.dec_train.attn.Wa.weight.data)
+
+    # tie fuse and output projection
+    model.dec_step.fuse.weight.data.copy_(model.dec_train.fuse.weight.data)
+    model.dec_step.fuse.bias.data.copy_(model.dec_train.fuse.bias.data)
+    model.dec_step.fc_vocab.weight.data.copy_(model.dec_train.fc_vocab.weight.data)
+    model.dec_step.fc_vocab.bias.data.copy_(model.dec_train.fc_vocab.bias.data)
 
     torch.onnx.export(
-        model.dec_step, (dummy_y, dummy_h, dummy_c),
+        model.dec_step,
+        (dummy_y, dummy_h, dummy_c, dummy_outs, dummy_msk),
         os.path.join(MODEL_DIR, "decoder.onnx"),
-        input_names  = ["y_prev", "h_in", "c_in"],
-        output_names = ["logits", "h_out", "c_out"],
-        dynamic_axes = {
-            "y_prev": {0: "B"}, # (B,1)
-            "h_in":   {1: "B"}, # (L,B,H)
-            "c_in":   {1: "B"},
-            "logits": {0: "B"}, # (B,1,V)
-            "h_out":  {1: "B"}, # (L,B,H)
-            "c_out":  {1: "B"},
+        input_names=["y_prev", "h", "c", "enc_outs", "enc_mask"],
+        output_names=["logits", "h_out", "c_out"],
+        dynamic_axes={
+            "y_prev": {0: "B"},
+            "h": {1: "B"},
+            "c": {1: "B"},
+            "enc_outs": {0: "B", 1: "Tsrc"},
+            "enc_mask": {0: "B", 1: "Tsrc"},
+            "logits": {0: "B"},
+            "h_out": {1: "B"},
+            "c_out": {1: "B"},
         },
-        opset_version=17,
-        # dynamo=True
+        opset_version=17
     )
 
     # meta for inference
