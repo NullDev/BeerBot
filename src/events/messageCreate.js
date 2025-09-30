@@ -38,8 +38,8 @@ const messageCreateHandler = async function(message){
     else if (message.channel.type === ChannelType.GuildText && !message.author.bot){
         await jokes(message);
 
-        const channelId = message.channel.id;
-        if (channelId === "1421575808702484530" && message.mentions.has(message.client.user)){
+        const channelId = message.channel.id; // @ts-ignore
+        if (config.discord.bot_owner_ids.includes(message.author.id) && message.mentions.has(message.client.user)){
             if (message.content.trim() === `<@!${message.client.user?.id}>`) return;
             const query = cleanMsg(message);
             message.channel.sendTyping();
