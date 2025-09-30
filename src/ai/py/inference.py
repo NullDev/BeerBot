@@ -16,15 +16,9 @@ for line in sys.stdin:
             sys.stdout.flush()
             continue
 
-        # 10% chance sample, 90% beam
-        if np.random.rand() < 0.1:
-            result = generate(text, method="sample")
-            method = "sample"
-        else:
-            result = generate(text, method="beam")
-            method = "beam"
+        result = generate(text)
 
-        sys.stdout.write(json.dumps({"ok": True, "result": result, "method": method}) + "\n")
+        sys.stdout.write(json.dumps({"ok": True, "result": result}) + "\n")
         sys.stdout.flush()
 
     except Exception as e:

@@ -9,7 +9,6 @@ import sentencepiece as spm
 
 MODEL_DIR = "./data/ai"
 
-# load tokenizer + meta
 sp = spm.SentencePieceProcessor(model_file=os.path.join(MODEL_DIR, "spm.model"))
 with open(os.path.join(MODEL_DIR, "meta.json"), "r", encoding="utf-8") as f:
     meta = json.load(f)
@@ -26,18 +25,28 @@ EOS    = meta["eos_id"]
 enc = ort.InferenceSession(os.path.join(MODEL_DIR, "encoder.onnx"), providers=["CPUExecutionProvider"])
 dec = ort.InferenceSession(os.path.join(MODEL_DIR, "decoder.onnx"), providers=["CPUExecutionProvider"])
 
-enc_in_name = enc.get_inputs()[0].name  # "src"
-enc_out_h   = enc.get_outputs()[0].name # "h"
-enc_out_c   = enc.get_outputs()[1].name # "c"
+enc_in_name = enc.get_inputs()[0].name      # "src"
+enc_out_encouts = enc.get_outputs()[0].name # "enc_outs"
+enc_out_h = enc.get_outputs()[1].name       # "h"
+enc_out_c = enc.get_outputs()[2].name       # "c"
 
-dec_in_names  = [i.name for i in dec.get_inputs()]  # ["y_prev","h_in","c_in"]
+dec_in_names = [i.name for i in dec.get_inputs()]   # ["y_prev","h_in","c_in","enc_outs","enc_mask"]
 dec_out_names = [o.name for o in dec.get_outputs()] # ["logits","h_out","c_out"]
 
-# decoding helpers
 def softmax_stable(x):
     x = x - np.max(x)
     e = np.exp(x)
     return e / (e.sum() + 1e-12)
+
+def blocked_by_ngrams(candidate_id, out_ids, n=3):
+    """Return True if adding candidate would create a repeated n-gram."""
+    if len(out_ids) < n - 1:
+        return False
+    tail = out_ids[-(n-1):] + [int(candidate_id)]
+    for i in range(len(out_ids) - n + 1):
+        if out_ids[i:i+n] == tail:
+            return True
+    return False
 
 def apply_repetition_penalty(logits, used_ids, penalty=1.2):
     if not used_ids:
@@ -48,7 +57,7 @@ def apply_repetition_penalty(logits, used_ids, penalty=1.2):
     return logits
 
 def sample_top_p_top_k(logits, top_p=0.9, top_k=40, temperature=0.8, disallow=None):
-    if temperature <= 0:  # safety
+    if temperature <= 0: # safety
         temperature = 1.0
     logits = logits.astype(np.float64) / temperature
 
@@ -86,18 +95,35 @@ def encode_text(text: str):
 def decode_sampled(src_text: str, max_new_tokens: int = 32, top_p=0.9, top_k=40, temperature=0.8, repetition_penalty=1.15, min_len=4):
     # encode once
     src_ids = np.array([encode_text(src_text)], dtype=np.int64) # (1, T)
-    h, c = enc.run([enc_out_h, enc_out_c], {enc_in_name: src_ids})
+    enc_mask = (src_ids != PAD) # (1, T)
+
+    enc_outs, h, c = enc.run(
+        [enc_out_encouts, enc_out_h, enc_out_c],
+        {enc_in_name: src_ids}
+    )
     h = h.astype(np.float32) # (L,B,H)
     c = c.astype(np.float32)
 
-    y_prev = np.array([[BOS]], dtype=np.int64)
+    y_prev = np.array([BOS], dtype=np.int64)
     out_ids = []
     disallow = {PAD, BOS} # never sample these
 
     for step in range(max_new_tokens):
-        feed = {"y_prev": y_prev, "h_in": h, "c_in": c}
+        feed = {
+            "y_prev": y_prev,
+            "h": h,
+            "c": c,
+            "enc_outs": enc_outs,
+            "enc_mask": enc_mask
+        }
         logits, h, c = dec.run(dec_out_names, feed)
-        logits = logits[0, 0] # (V,)
+        logits = np.asarray(logits)
+        # old shape (B,1,V)
+        if logits.ndim == 3:   logits = logits[0, 0]
+        # new shape (B, V)
+        elif logits.ndim == 2: logits = logits[0]
+        # already (V,)
+        else: logits = logits
 
         # repetition penalty
         logits = apply_repetition_penalty(logits, out_ids, penalty=repetition_penalty)
@@ -107,76 +133,42 @@ def decode_sampled(src_text: str, max_new_tokens: int = 32, top_p=0.9, top_k=40,
         if step < min_len:
             local_disallow.add(EOS)
 
-        next_id = sample_top_p_top_k(
-            logits,
-            top_p=top_p,
-            top_k=top_k,
-            temperature=temperature,
-            disallow=local_disallow
-        )
+        work_logits = logits.copy()
+
+        attempts = 0
+        while True:
+            next_id = sample_top_p_top_k(
+                work_logits,
+                top_p=top_p,
+                top_k=top_k,
+                temperature=temperature,
+                disallow=local_disallow
+            )
+            # if this choice would repeat a recent 3-gram, mask it out and resample
+            if blocked_by_ngrams(next_id, out_ids, n=3) and attempts < 10:
+                work_logits[int(next_id)] = -1e9 # forbid and try again
+                attempts += 1
+                continue
+            break
 
         # safety clamp
         next_id = max(0, min(next_id, VOCAB - 1))
 
-        if next_id == EOS:
-            break
+        if next_id == EOS: break
 
         out_ids.append(next_id)
-        y_prev = np.array([[next_id]], dtype=np.int64)
+        y_prev = np.array([next_id], dtype=np.int64)
 
     out_ids = [int(x) for x in out_ids]
     return sp.decode(out_ids)
 
-def decode_beam(src_text: str, max_new_tokens=32, beam_size=5, length_penalty=0.7):
-    src_ids = np.array([encode_text(src_text)], dtype=np.int64)
-    h, c = enc.run([enc_out_h, enc_out_c], {enc_in_name: src_ids})
-    h, c = h.astype(np.float32), c.astype(np.float32)
-
-    beams = [(0.0, [BOS], h, c)]
-    completed = []
-
-    for _ in range(max_new_tokens):
-        new_beams = []
-        for score, seq, h, c in beams:
-            if seq[-1] == EOS:
-                completed.append((score, seq))
-                continue
-
-            y_prev = np.array([[seq[-1]]], dtype=np.int64)
-            feed = {"y_prev": y_prev, "h_in": h, "c_in": c}
-            logits, h_new, c_new = dec.run(dec_out_names, feed)
-            logits = logits[0, 0]
-            probs = softmax_stable(logits)
-
-            topk_ids = np.argsort(-probs)[:beam_size]
-            for tid in topk_ids:
-                new_score = score + np.log(probs[tid] + 1e-12)
-                new_beams.append((new_score, seq + [tid], h_new, c_new))
-
-        beams = sorted(new_beams, key=lambda x: x[0] / (len(x[1])**length_penalty), reverse=True)[:beam_size]
-        if not beams:
-            break
-
-    completed.extend([(s, seq) for s, seq, _, _ in beams])
-    best = max(completed, key=lambda x: x[0] / (len(x[1])**length_penalty))
-    out_ids = best[1][1:] # drop BOS
-    if EOS in out_ids:
-        out_ids = out_ids[:out_ids.index(EOS)]
-
-    # ensure Python list of ints
-    out_ids = [int(x) for x in out_ids]
-
-    return sp.decode(out_ids)
-
-def generate(text: str, method="sample") -> str:
-    if method == "beam":
-        return decode_beam(text, max_new_tokens=min(MAXLEN, 32))
+def generate(text: str) -> str:
     return decode_sampled(
         text,
         max_new_tokens=min(MAXLEN, 32),
-        top_p=0.92,
-        top_k=50,
-        temperature=0.9,
-        repetition_penalty=1.12,
-        min_len=3
+        top_p=0.90,              # 0.92
+        top_k=30,                # 50
+        temperature=0.7,         # 0.9
+        repetition_penalty=1.20, # 1.12
+        min_len=4
     )

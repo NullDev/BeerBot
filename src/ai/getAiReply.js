@@ -91,7 +91,6 @@ export class PythonAIWorker {
                     if (msg.ok){
                         Log.debug("[AIWorker] Inference request: '" + text + "'");
                         Log.debug("[AIWorker] Inference response: '" + msg.result + "'");
-                        Log.debug("[AIWorker] Inference method: '" + msg.method + "'");
                         resolve(msg.result);
                     }
                     else reject(new Error(msg.error));
