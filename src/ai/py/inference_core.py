@@ -87,8 +87,7 @@ def seq2seq_log_prob(src_text: str, tgt_text: str) -> float:
 def combined_score(src_text: str, candidate: str, lm_weight=0.3):
     lm_s = lm_score(candidate)
     model_s = seq2seq_log_prob(src_text, candidate)
-    length_s = len(candidate.split()) * 
-    return lm_weight * lm_s + (1 - lm_weight) * model_s + length_s
+    return lm_weight * lm_s + (1 - lm_weight) * model_s
 
 def blocked_by_ngrams(candidate_id, out_ids, n=3):
     """Return True if adding candidate would create a repeated n-gram."""
