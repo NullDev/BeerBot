@@ -41,8 +41,8 @@ const messageCreateHandler = async function(message){
         const channelId = message.channel.id; // @ts-ignore
         if (message.mentions.has(message.client.user)){
             if (message.content.trim() === `<@!${message.client.user?.id}>`) return;
-            const query = cleanMsg(message);
             message.channel.sendTyping();
+            const query = cleanMsg(message);
             try {
                 const reply = await aiWorker.infer(query);
                 await message.reply(reply);

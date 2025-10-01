@@ -91,7 +91,13 @@ export class PythonAIWorker {
                     if (msg.ok){
                         Log.debug("[AIWorker] Inference request: '" + text + "'");
                         Log.debug("[AIWorker] Inference response: '" + msg.result + "'");
-                        resolve(msg.result);
+
+                        const cleaned = msg.result
+                            .replaceAll(":spongesideeye:", "<:spongesideeye:1410980400137768990>")
+                            .replaceAll(":kek:", "<:kek:1398084145074278400>")
+                            .trim();
+
+                        resolve(cleaned);
                     }
                     else reject(new Error(msg.error));
                 }
@@ -109,6 +115,7 @@ export class PythonAIWorker {
 
     stop(){
         if (this.#proc){
+            this.#proc.stdin.end();
             this.#proc.kill("SIGTERM");
             this.#proc = null;
             this.#ready = false;
