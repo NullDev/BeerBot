@@ -52,7 +52,7 @@ def sentence_length_bonus(candidate: str) -> float:
 
     # Mild bump for sentence-like replies
     if n >= 5:
-        return 1.0  # tuneable base bonus
+        return 1.0 # tuneable base bonus
     elif n >= 3:
         return 0.5
     else:
