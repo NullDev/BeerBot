@@ -1,3 +1,4 @@
+import fs from "node:fs";
 import { Events } from "discord.js";
 import registerCommands from "../service/commandRegister.js";
 import scheduleCrons from "../service/cronScheduler.js";
@@ -34,6 +35,14 @@ const clientReady = async function(client){
 
     const count = client.guilds.cache.reduce((acc, guild) => acc + (guild.memberCount || 0), 0);
     await setStatus(client, count);
+
+    Log.wait("Exporting Server Emojis to JSON file...");
+    const emojiData = {};
+    client.emojis.cache.forEach(emoji => { // @ts-ignore
+        emojiData[":" + emoji.name + ":"] = "<" + (emoji.animated ? "a" : "") + ":" + emoji.name + ":" + emoji.id + ">";
+    });
+    fs.writeFileSync("data/emojis.json", JSON.stringify(emojiData, null, 4), { encoding: "utf-8" });
+    Log.done("Exported " + client.emojis.cache.size + " emojis to data/emojis.txt");
 };
 
 export default clientReady;
