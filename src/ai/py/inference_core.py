@@ -93,7 +93,7 @@ def seq2seq_log_prob(src_text: str, tgt_text: str) -> float:
 
     return float(log_prob)
 
-def combined_score(src_text, candidate, lm_weight=0.3, length_bonus=0.15, repeat_penalty=2.0):
+def combined_score(src_text, candidate, lm_weight=0.3, length_bonus=0.15, repeat_penalty=3.0):
     lm_s = lm_score(candidate)
     model_s = seq2seq_log_prob(src_text, candidate)
     length_s = length_bonus * sentence_length_bonus(candidate)
