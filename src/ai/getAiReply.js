@@ -1,4 +1,5 @@
 import os from "node:os";
+import fs from "node:fs";
 import { spawn } from "node:child_process";
 import Log from "../util/log";
 
@@ -16,6 +17,7 @@ export class PythonAIWorker {
     // @ts-ignore
     #proc;
     #ready;
+    #emojiList;
 
     /**
      * Creates an instance of PythonAIWorker.
@@ -27,6 +29,10 @@ export class PythonAIWorker {
         this.scriptPath = scriptPath;
         this.#ready = false;
         this.#start();
+
+        if (fs.existsSync("./data/emojis.json")){
+            this.#emojiList = JSON.parse(fs.readFileSync("./data/emojis.json", "utf-8"));
+        }
     }
 
     /**
@@ -91,8 +97,16 @@ export class PythonAIWorker {
                     if (msg.ok){
                         Log.debug("[AIWorker] Inference request: '" + text + "'");
                         Log.debug("[AIWorker] Inference response: '" + msg.result + "'");
-                        Log.debug("[AIWorker] Inference method: '" + msg.method + "'");
-                        resolve(msg.result);
+
+                        let cleaned = msg.result;
+                        if (this.#emojiList){
+                            for (const [key, value] of Object.entries(this.#emojiList)){
+                                cleaned = cleaned.replaceAll(key, value);
+                            }
+                        }
+                        cleaned = cleaned.trim();
+
+                        resolve(cleaned);
                     }
                     else reject(new Error(msg.error));
                 }
@@ -110,6 +124,7 @@ export class PythonAIWorker {
 
     stop(){
         if (this.#proc){
+            this.#proc.stdin.end();
             this.#proc.kill("SIGTERM");
             this.#proc = null;
             this.#ready = false;

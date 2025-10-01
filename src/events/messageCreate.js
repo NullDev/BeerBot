@@ -16,12 +16,27 @@ await brain.init();
 const aiWorker = new PythonAIWorker();
 
 /**
+ * Get the bot name for mentions, try the nickname of the bot in the guild first, then display name
+ *
+ * @param {import("discord.js").Message} message
+ */
+const getBotName = message => {
+    if (message.guild){
+        const member = message.guild.members.cache.get(message.client.user.id);
+        return member?.nickname || message.client.user.displayName;
+    }
+    return message.client.user.displayName;
+};
+
+/**
  * Clean message content by removing mentions and trimming whitespace
  *
  * @param {import("discord.js").Message} message
  */
 const cleanMsg = message => message.cleanContent.replace(/<a?(:[a-zA-Z0-9_]+:)[0-9]+>/g, "$1")
-    .replace(`<@${message.client.user.id}>`, "").trim();
+    .replace(`<@${message.client.user.id}>`, "")
+    .replace(`@${getBotName(message)} `, "")
+    .trim();
 
 /**
  * Handle messageCreate event
@@ -41,8 +56,8 @@ const messageCreateHandler = async function(message){
         const channelId = message.channel.id; // @ts-ignore
         if (message.mentions.has(message.client.user)){
             if (message.content.trim() === `<@!${message.client.user?.id}>`) return;
-            const query = cleanMsg(message);
             message.channel.sendTyping();
+            const query = cleanMsg(message);
             try {
                 const reply = await aiWorker.infer(query);
                 await message.reply(reply);
