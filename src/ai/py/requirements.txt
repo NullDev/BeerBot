@@ -3,3 +3,4 @@ sentencepiece==0.2.1
 onnxruntime==1.22.1
 torch==2.8.0
 onnxscript==0.5.2
+kenlm @ https://github.com/kpu/kenlm/archive/master.zip#sha256=f935c2ac0be6dd1bf96a5852973dad6103c48e866cf33532459fb1336bea4bfe
