@@ -46,18 +46,24 @@ def softmax_stable(x):
     e = np.exp(x)
     return e / (e.sum() + 1e-12)
 
+def sentence_length_bonus(candidate: str) -> float:
+    tokens = candidate.strip().split()
+    n = len(tokens)
+
+    # Mild bump for sentence-like replies
+    if n >= 5:
+        return 1.0  # tuneable base bonus
+    elif n >= 3:
+        return 0.5
+    else:
+        return 0.0
+
 def lm_score(text: str) -> float:
-    """
-    Score a sentence using the KenLM model.
-    Higher = more fluent.
-    """
+    """Score a sentence using the KenLM model. Higher = more fluent."""
     return lm.score(text, bos=True, eos=True)
 
 def seq2seq_log_prob(src_text: str, tgt_text: str) -> float:
-    """
-    Compute the log-probability of the target sequence given the source
-    under the Seq2Seq model.
-    """
+    """Compute the log-probability of the target sequence given the source under the Seq2Seq model."""
     # Encode source
     src_ids = np.array([encode_text(src_text)], dtype=np.int64)
     enc_mask = (src_ids != PAD)
@@ -90,7 +96,7 @@ def seq2seq_log_prob(src_text: str, tgt_text: str) -> float:
 def combined_score(src_text, candidate, lm_weight=0.3, length_bonus=0.15, repeat_penalty=2.0):
     lm_s = lm_score(candidate)
     model_s = seq2seq_log_prob(src_text, candidate)
-    length_s = len(candidate.split()) * length_bonus
+    length_s = length_bonus * sentence_length_bonus(candidate)
 
     # repetition penalty
     if candidate in LAST_REPLIES:
@@ -109,9 +115,7 @@ def blocked_by_ngrams(candidate_id, out_ids, n=3):
     return False
 
 def generate_candidates(text: str, n: int = 5) -> str:
-    """
-    Generate n candidate responses and return the one with the best KenLM score.
-    """
+    """Generate n candidate responses and return the one with the best KenLM score."""
     candidates = []
     for _ in range(n):
         temp = random.uniform(0.6, 0.9)
