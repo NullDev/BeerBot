@@ -1,13 +1,18 @@
 import os, json
+import random
 import numpy as np
 import onnxruntime as ort
 import sentencepiece as spm
+import kenlm
 
 # ========================= #
 # = Copyright (c) NullDev = #
 # ========================= #
 
 MODEL_DIR = "./data/ai"
+
+KENLM_PATH = os.path.join(MODEL_DIR, "reranker.klm")
+lm = kenlm.Model(KENLM_PATH)
 
 sp = spm.SentencePieceProcessor(model_file=os.path.join(MODEL_DIR, "spm.model"))
 with open(os.path.join(MODEL_DIR, "meta.json"), "r", encoding="utf-8") as f:
@@ -38,6 +43,53 @@ def softmax_stable(x):
     e = np.exp(x)
     return e / (e.sum() + 1e-12)
 
+def lm_score(text: str) -> float:
+    """
+    Score a sentence using the KenLM model.
+    Higher = more fluent.
+    """
+    return lm.score(text, bos=True, eos=True)
+
+def seq2seq_log_prob(src_text: str, tgt_text: str) -> float:
+    """
+    Compute the log-probability of the target sequence given the source
+    under the Seq2Seq model.
+    """
+    # Encode source
+    src_ids = np.array([encode_text(src_text)], dtype=np.int64)
+    enc_mask = (src_ids != PAD)
+    enc_outs, h, c = enc.run(
+        [enc_out_encouts, enc_out_h, enc_out_c],
+        {enc_in_name: src_ids}
+    )
+
+    # Encode target (no BOS)
+    tgt_ids = [BOS] + sp.encode(tgt_text, out_type=int)[:MAXLEN-2] + [EOS]
+    log_prob = 0.0
+    y_prev = np.array([BOS], dtype=np.int64)
+
+    for next_id in tgt_ids[1:]:
+        feed = {
+            "y_prev": y_prev,
+            "h": h,
+            "c": c,
+            "enc_outs": enc_outs,
+            "enc_mask": enc_mask
+        }
+        logits, h, c = dec.run(dec_out_names, feed)
+        logits = np.asarray(logits[0] if logits.ndim > 1 else logits)
+        probs = softmax_stable(logits)
+        log_prob += np.log(probs[next_id] + 1e-12)
+        y_prev = np.array([next_id], dtype=np.int64)
+
+    return float(log_prob)
+
+def combined_score(src_text: str, candidate: str, lm_weight=0.3):
+    lm_s = lm_score(candidate)
+    model_s = seq2seq_log_prob(src_text, candidate)
+    length_s = len(candidate.split()) * 
+    return lm_weight * lm_s + (1 - lm_weight) * model_s + length_s
+
 def blocked_by_ngrams(candidate_id, out_ids, n=3):
     """Return True if adding candidate would create a repeated n-gram."""
     if len(out_ids) < n - 1:
@@ -47,6 +99,30 @@ def blocked_by_ngrams(candidate_id, out_ids, n=3):
         if out_ids[i:i+n] == tail:
             return True
     return False
+
+def generate_candidates(text: str, n: int = 5) -> str:
+    """
+    Generate n candidate responses and return the one with the best KenLM score.
+    """
+    candidates = []
+    for _ in range(n):
+        temp = random.uniform(0.6, 0.9)
+        top_p = random.uniform(0.8, 0.95)
+        top_k = random.randint(20, 50)
+        cand = decode_sampled(
+            text,
+            max_new_tokens=min(MAXLEN, 32),
+            top_p=top_p,
+            top_k=top_k,
+            temperature=temp,
+            repetition_penalty=1.20,
+            min_len=4
+        )
+        candidates.append(cand)
+
+    # Score with KenLM and pick the best
+    best = max(candidates, key=lambda c: combined_score(text, c, lm_weight=0.3))
+    return best
 
 def apply_repetition_penalty(logits, used_ids, penalty=1.2):
     if not used_ids:
@@ -163,12 +239,4 @@ def decode_sampled(src_text: str, max_new_tokens: int = 32, top_p=0.9, top_k=40,
     return sp.decode(out_ids)
 
 def generate(text: str) -> str:
-    return decode_sampled(
-        text,
-        max_new_tokens=min(MAXLEN, 32),
-        top_p=0.90,              # 0.92
-        top_k=30,                # 50
-        temperature=0.7,         # 0.9
-        repetition_penalty=1.20, # 1.12
-        min_len=4
-    )
+    return generate_candidates(text, n=10)
