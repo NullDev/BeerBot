@@ -1,5 +1,6 @@
 import os, json
 import random
+from collections import deque
 import numpy as np
 import onnxruntime as ort
 import sentencepiece as spm
@@ -10,6 +11,8 @@ import kenlm
 # ========================= #
 
 MODEL_DIR = "./data/ai"
+
+LAST_REPLIES = deque(maxlen=10)
 
 KENLM_PATH = os.path.join(MODEL_DIR, "reranker.klm")
 lm = kenlm.Model(KENLM_PATH)
@@ -84,10 +87,16 @@ def seq2seq_log_prob(src_text: str, tgt_text: str) -> float:
 
     return float(log_prob)
 
-def combined_score(src_text: str, candidate: str, lm_weight=0.3):
+def combined_score(src_text, candidate, lm_weight=0.3, length_bonus=0.15, repeat_penalty=2.0):
     lm_s = lm_score(candidate)
     model_s = seq2seq_log_prob(src_text, candidate)
-    return lm_weight * lm_s + (1 - lm_weight) * model_s
+    length_s = len(candidate.split()) * length_bonus
+
+    # repetition penalty
+    if candidate in LAST_REPLIES:
+        model_s -= repeat_penalty # big negative hit for repeats
+
+    return lm_weight * lm_s + (1 - lm_weight) * model_s + length_s
 
 def blocked_by_ngrams(candidate_id, out_ids, n=3):
     """Return True if adding candidate would create a repeated n-gram."""
@@ -121,6 +130,7 @@ def generate_candidates(text: str, n: int = 5) -> str:
 
     # Score with KenLM and pick the best
     best = max(candidates, key=lambda c: combined_score(text, c, lm_weight=0.3))
+    LAST_REPLIES.append(best)
     return best
 
 def apply_repetition_penalty(logits, used_ids, penalty=1.2):
