@@ -1,7 +1,7 @@
 import { ChannelType } from "discord.js";
 import { handleDMVerification } from "../service/dmVerification/dmVerification.js";
 import jokes from "../service/jokes.js";
-import { MessageLearner } from "../ai/Markov.js";
+import { MessageLearner } from "../ai/MessageLearner.js";
 import { PythonAIWorker } from "../ai/getAiReply.js";
 import Log from "../util/log.js";
 import { config } from "../../config/config.js";
