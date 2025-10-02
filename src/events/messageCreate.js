@@ -10,7 +10,7 @@ import { config } from "../../config/config.js";
 // = Copyright (c) NullDev = //
 // ========================= //
 
-const brain = new OrganicMarkov({ order: 2 });
+const brain = new OrganicMarkov();
 await brain.init();
 
 const aiWorker = new PythonAIWorker();
@@ -67,7 +67,7 @@ const messageCreateHandler = async function(message){
                 await message.reply("Fehler: Bot moch grod ned so beep boop wie er soll... Frag Shadow warum er nix kann");
             }
         }
-        else if (config.ai_included_channels.includes(channelId)){
+        if (config.ai_included_channels.includes(channelId)){
             brain.learn({
                 id: message.id,
                 content: cleanMsg(message) || "", // @ts-ignore
