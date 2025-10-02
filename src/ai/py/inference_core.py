@@ -14,8 +14,11 @@ MODEL_DIR = "./data/ai"
 
 LAST_REPLIES = deque(maxlen=10)
 
-KENLM_PATH = os.path.join(MODEL_DIR, "reranker.klm")
-lm = kenlm.Model(KENLM_PATH)
+GENERIC_KENLM_PATH = os.path.join(MODEL_DIR, "generic_reranker.klm")
+g_lm = kenlm.Model(GENERIC_KENLM_PATH)
+
+DOMAIN_KENLM_PATH = os.path.join(MODEL_DIR, "domain_reranker.klm")
+d_lm = kenlm.Model(DOMAIN_KENLM_PATH)
 
 sp = spm.SentencePieceProcessor(model_file=os.path.join(MODEL_DIR, "spm.model"))
 with open(os.path.join(MODEL_DIR, "meta.json"), "r", encoding="utf-8") as f:
@@ -58,10 +61,6 @@ def sentence_length_bonus(candidate: str) -> float:
     else:
         return 0.0
 
-def lm_score(text: str) -> float:
-    """Score a sentence using the KenLM model. Higher = more fluent."""
-    return lm.score(text, bos=True, eos=True)
-
 def seq2seq_log_prob(src_text: str, tgt_text: str) -> float:
     """Compute the log-probability of the target sequence given the source under the Seq2Seq model."""
     # Encode source
@@ -94,7 +93,9 @@ def seq2seq_log_prob(src_text: str, tgt_text: str) -> float:
     return float(log_prob)
 
 def combined_score(src_text, candidate, lm_weight=0.45, repeat_penalty=3.0):
-    lm_s = lm_score(candidate)
+    d_lm_s = d_lm.score(candidate, bos=True, eos=True)
+    g_lm_s = g_lm.score(candidate, bos=True, eos=True)
+    lm_s = (0.4 * d_lm_s) - (0.1 * g_lm_s) # α * domain - β * generic = anti-generic
     model_s = seq2seq_log_prob(src_text, candidate)
     length_s = sentence_length_bonus(candidate)
 
