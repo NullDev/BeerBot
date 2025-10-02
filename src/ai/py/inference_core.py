@@ -123,12 +123,12 @@ def generate_candidates(text: str, n: int = 5) -> str:
         top_k = random.randint(20, 50)
         cand = decode_sampled(
             text,
-            max_new_tokens=min(MAXLEN, 32),
+            max_new_tokens=min(MAXLEN, 48),
             top_p=top_p,
             top_k=top_k,
             temperature=temp,
             repetition_penalty=1.20,
-            min_len=4
+            min_len=6
         )
         candidates.append(cand)
 
