@@ -18,4 +18,6 @@ const out = rows.map(r => JSON.stringify({ input: r.input, target: r.target })).
 writeFileSync("./data/ai/dataset.jsonl", out);
 console.log("Wrote", rows.length, "pairs");
 
+db.run("DROP TABLE IF EXISTS markov");
+
 db.close();
