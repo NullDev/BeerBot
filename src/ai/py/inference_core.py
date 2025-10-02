@@ -93,10 +93,10 @@ def seq2seq_log_prob(src_text: str, tgt_text: str) -> float:
 
     return float(log_prob)
 
-def combined_score(src_text, candidate, lm_weight=0.3, length_bonus=0.15, repeat_penalty=3.0):
+def combined_score(src_text, candidate, lm_weight=0.45, repeat_penalty=3.0):
     lm_s = lm_score(candidate)
     model_s = seq2seq_log_prob(src_text, candidate)
-    length_s = length_bonus * sentence_length_bonus(candidate)
+    length_s = sentence_length_bonus(candidate)
 
     # repetition penalty
     if candidate in LAST_REPLIES:
@@ -133,7 +133,7 @@ def generate_candidates(text: str, n: int = 5) -> str:
         candidates.append(cand)
 
     # Score with KenLM and pick the best
-    best = max(candidates, key=lambda c: combined_score(text, c, lm_weight=0.3))
+    best = max(candidates, key=lambda c: combined_score(text, c))
     LAST_REPLIES.append(best)
     return best
 
