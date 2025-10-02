@@ -1,7 +1,7 @@
 import { ChannelType } from "discord.js";
 import { handleDMVerification } from "../service/dmVerification/dmVerification.js";
 import jokes from "../service/jokes.js";
-import { OrganicMarkov } from "../ai/Markov.js";
+import { MessageLearner } from "../ai/Markov.js";
 import { PythonAIWorker } from "../ai/getAiReply.js";
 import Log from "../util/log.js";
 import { config } from "../../config/config.js";
@@ -10,7 +10,7 @@ import { config } from "../../config/config.js";
 // = Copyright (c) NullDev = //
 // ========================= //
 
-const brain = new OrganicMarkov();
+const brain = new MessageLearner();
 await brain.init();
 
 const aiWorker = new PythonAIWorker();

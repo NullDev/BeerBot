@@ -9,14 +9,14 @@ import { Database as BunDB } from "bun:sqlite";
  * - Conversational memory with reply chains and sequential adjacency
  *
  * @export
- * @class OrganicMarkov
+ * @class MessageLearner
  */
-export class OrganicMarkov {
+export class MessageLearner {
     /**
-     * Creates an instance of OrganicMarkov.
+     * Creates an instance of MessageLearner.
      * @param {Object} [opts]
      * @param {number} [opts.lookbackWindow]
-     * @memberof OrganicMarkov
+     * @memberof MessageLearner
      */
     constructor(opts = {}){
         this.lookbackWindow = opts.lookbackWindow ?? 5;
@@ -47,7 +47,7 @@ export class OrganicMarkov {
      *
      * @param {import("discord.js").Message} msg
      * @return {Promise<void>}
-     * @memberof OrganicMarkov
+     * @memberof MessageLearner
      */
     async learn(msg){
         if (!msg || !msg.id) return;
@@ -119,7 +119,7 @@ export class OrganicMarkov {
      *
      * @param {string} s
      * @return {string}
-     * @memberof OrganicMarkov
+     * @memberof MessageLearner
      */
     cleanText(s){
         if (!s) return "";
@@ -138,7 +138,7 @@ export class OrganicMarkov {
      * @param {string} parent
      * @param {string} reply
      * @param {number} ts
-     * @memberof OrganicMarkov
+     * @memberof MessageLearner
      */
     addPair(parent, reply, ts){
         this.db.run(
