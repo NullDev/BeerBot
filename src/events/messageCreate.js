@@ -59,7 +59,6 @@ const messageCreateHandler = async function(message){
             message.channel.sendTyping();
             let query = cleanMsg(message);
 
-            // Check if [DEBUG] is present
             const debugMode = query.includes("[DEBUG]");
             if (debugMode){
                 query = query.replace(/\[DEBUG\]/gi, "").trim();
@@ -93,45 +92,51 @@ const messageCreateHandler = async function(message){
                 const reply = await aiWorker.infer(query, debugMode);
 
                 if (debugMode && typeof reply === "object"){
-                    // Create debug embed
                     const { EmbedBuilder } = await import("discord.js");
-                    const embed = new EmbedBuilder()
-                        .setTitle("🔍 AI Debug - LSTM Seq2Seq + Luong Attention + KenLM Reranker")
-                        .setColor(0x5865F2);
+                    const embeds = [];
 
                     // Sort candidates by score
                     const sortedCandidates = reply.debug.candidates
                         .map((cand, idx) => ({ ...cand, originalIndex: idx }))
                         .sort((a, b) => b.score - a.score);
 
-                    // Find which candidate was selected
                     const selectedIndex = sortedCandidates.findIndex(c => c.text === reply.text);
 
-                    // Show top 5 candidates
-                    sortedCandidates.slice(0, 5).forEach((candidate, index) => {
-                        const isSelected = index === selectedIndex;
-                        const parrotIcon = candidate.parrot ? "🦜" : "✨";
-                        const selectedIcon = isSelected ? "- **CHOSEN REPLY**" : "";
+                    const overviewEmbed = new EmbedBuilder()
+                        .setTitle("🔍 AI Debug - LSTM Seq2Seq + Luong Attention + KenLM Reranker")
+                        .setColor(0x5865F2);
+                    embeds.push(overviewEmbed);
 
+                    sortedCandidates.slice(0, 3).forEach((candidate, index) => {
+                        const isSelected = index === selectedIndex;
                         const {breakdown} = candidate;
                         const {params} = candidate;
 
-                        const fieldValue = [
-                            `- **Text:** "${candidate.text.substring(0, 80)}${candidate.text.length > 80 ? "..." : ""}"`,
-                            `- **Scores:**\n  - Seq2Seq Model: \`${breakdown.model.toFixed(2)}\` ┃ Domain LM: \`${breakdown.domain_lm.toFixed(2)}\` ┃ Generic LM: \`${breakdown.generic_lm.toFixed(2)}\`\n  - **Final: \`${breakdown.total.toFixed(2)}\`**`,
-                            `- **Bonuses:**\n  - Length: \`${breakdown.length.toFixed(2)}\` ┃ Context: \`${breakdown.context.toFixed(2)}\` ┃ Repeat Penalty: \`${breakdown.repeat_penalty.toFixed(2)}\``,
-                            `- **Params:**\n  - Temp: \`${params.temperature.toFixed(2)}\` ┃ Rep-Pen: \`${params.repetition_penalty}\`\n  - Min-Len: \`${params.min_len}\` ┃ Max-New-Tok: \`${params.max_new_tokens}\`\n  - Top-P: \`${params.top_p.toFixed(2)}\` ┃ Top-K: \`${params.top_k}\``,
-                            `- **Parroted:** ${candidate.parrot ? "Yes, message is in dataset" : "No, message is original"}`,
-                        ].join("\n");
-
-                        embed.addFields({
-                            name: `---\n${parrotIcon} Candidate ${index + 1} ${selectedIcon}`,
-                            value: fieldValue,
-                            inline: false,
-                        });
+                        const candidateEmbed = new EmbedBuilder()
+                            .setTitle(`Candidate #${index + 1}${isSelected ? " - CHOSEN REPLY ⭐" : ""}`)
+                            .setColor(isSelected ? 0x57F287 : 0x3B3D42)
+                            .addFields(
+                                { name: "Text", value: `"${candidate.text.substring(0, 200)}${candidate.text.length > 200 ? "..." : ""}"`, inline: false },
+                                { name: "Final Score", value: `**\`${breakdown.total.toFixed(2)}\`**`, inline: true },
+                                { name: "Parroted", value: candidate.parrot ? "🦜 Yes" : "✨ No", inline: true },
+                                { name: "\u200b", value: "\u200b", inline: true },
+                                { name: "Seq2Seq Model", value: `\`${breakdown.model.toFixed(2)}\``, inline: true },
+                                { name: "Domain LM", value: `\`${breakdown.domain_lm.toFixed(2)}\``, inline: true },
+                                { name: "Generic LM", value: `\`${breakdown.generic_lm.toFixed(2)}\``, inline: true },
+                                { name: "Length Bonus", value: `\`${breakdown.length.toFixed(2)}\``, inline: true },
+                                { name: "Context Bonus", value: `\`${breakdown.context.toFixed(2)}\``, inline: true },
+                                { name: "Applied Repeat Penalty", value: `\`${breakdown.repeat_penalty.toFixed(2)}\``, inline: true },
+                                { name: "Temperature", value: `\`${params.temperature.toFixed(2)}\``, inline: true },
+                                { name: "Default Repeat Penalty", value: `\`${params.repetition_penalty}\``, inline: true },
+                                { name: "Top-P", value: `\`${params.top_p.toFixed(2)}\``, inline: true },
+                                { name: "Top-K", value: `\`${params.top_k}\``, inline: true },
+                                { name: "Min Length", value: `\`${params.min_len}\``, inline: true },
+                                { name: "Max New Tokens", value: `\`${params.max_new_tokens}\``, inline: true },
+                            );
+                        embeds.push(candidateEmbed);
                     });
 
-                    await message.reply({ content: reply.text, embeds: [embed] });
+                    await message.reply({ content: reply.text, embeds });
                 }
                 else if (typeof reply === "string"){
                     await message.reply(reply);
