@@ -57,7 +57,24 @@ const messageCreateHandler = async function(message){
         if (message.mentions.has(message.client.user)){
             if (message.content.trim() === `<@!${message.client.user?.id}>`) return;
             message.channel.sendTyping();
-            const query = cleanMsg(message);
+            let query = cleanMsg(message);
+
+            try {
+                const prevMessages = await message.channel.messages.fetch({ limit: 2, before: message.id });
+                if (prevMessages.size > 0){
+                    const prevMsg = prevMessages.first();
+                    if (prevMsg && !prevMsg.author.bot){
+                        const prevContent = cleanMsg(prevMsg);
+                        if (prevContent && prevContent.length > 0){
+                            query = `[PREV: ${prevContent}] ${query}`;
+                        }
+                    }
+                }
+            }
+            catch (e){
+                Log.error("[AIWorker] Could not fetch previous message for context: ", e);
+            }
+
             try {
                 const reply = await aiWorker.infer(query);
                 await message.reply(reply);
