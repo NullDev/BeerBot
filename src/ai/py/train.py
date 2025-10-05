@@ -123,7 +123,8 @@ def main():
             loss = nn.functional.cross_entropy(
                 logits.reshape(-1, logits.size(-1)),
                 tgt_out.reshape(-1),
-                ignore_index=PAD
+                ignore_index=PAD,
+                label_smoothing=0.1  # Encourage diversity, reduce overconfidence
             )
             opt.zero_grad()
             loss.backward()

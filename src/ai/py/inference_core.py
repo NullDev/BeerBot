@@ -92,14 +92,15 @@ def seq2seq_log_prob(src_text: str, tgt_text: str) -> float:
 
     return float(log_prob)
 
-def combined_score(src_text, candidate, lm_weight=0.45, repeat_penalty=3.0):
+def combined_score(src_text, candidate, lm_weight=0.3, repeat_penalty=5.0):
     d_lm_s = d_lm.score(candidate, bos=True, eos=True)
     g_lm_s = g_lm.score(candidate, bos=True, eos=True)
-    lm_s = (0.4 * d_lm_s) - (0.1 * g_lm_s) # α * domain - β * generic = anti-generic
+    # Balance domain knowledge with grammar - both contribute positively
+    lm_s = (0.3 * d_lm_s) + (0.15 * g_lm_s)
     model_s = seq2seq_log_prob(src_text, candidate)
     length_s = sentence_length_bonus(candidate)
 
-    # repetition penalty
+    # stronger repetition penalty
     if candidate in LAST_REPLIES:
         model_s -= repeat_penalty # big negative hit for repeats
 
@@ -252,5 +253,13 @@ def decode_sampled(src_text: str, max_new_tokens: int = 32, top_p=0.9, top_k=40,
     out_ids = [int(x) for x in out_ids]
     return sp.decode(out_ids)
 
+def strip_context_prefix(text: str) -> str:
+    """Remove [PREV: ...] prefix if present."""
+    import re
+    # Match [PREV: anything] at the start, followed by space
+    return re.sub(r'^\[PREV:\s*.*?\]\s*', '', text)
+
 def generate(text: str) -> str:
-    return generate_candidates(text, n=10)
+    result = generate_candidates(text, n=10)
+    # Strip context prefix from output (user doesn't need to see it)
+    return strip_context_prefix(result)
