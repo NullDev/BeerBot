@@ -1,8 +1,7 @@
 import os from "node:os";
 import { Database } from "bun:sqlite";
 import { spawn } from "node:child_process";
-import fs from "node:fs";
-import Log from "../util/log";
+import exportDb from "../util/exportDb";
 
 // ========================= //
 // = Copyright (c) NullDev = //
@@ -32,19 +31,8 @@ export class DailyTrainer {
      *
      * @memberof DailyTrainer
      */
-    #exportDataset(){
-        if (fs.existsSync(`${this.outDir}/dataset.jsonl`)){
-            fs.unlinkSync(`${this.outDir}/dataset.jsonl`);
-            Log.info("Old dataset.jsonl deleted");
-        }
-        const rows = this.db.query(`
-            SELECT parentKey AS input, reply AS target
-            FROM pairs
-            WHERE length(input) > 0 AND length(target) > 0
-        `).all();
-        const jsonl = rows.map(r => JSON.stringify({ input: r.input, target: r.target })).join("\n");
-        fs.writeFileSync(`${this.outDir}/dataset.jsonl`, jsonl);
-        Log.info(`Wrote ${rows.length} pairs to dataset.jsonl`);
+    async #exportDataset(){
+        await exportDb();
     }
 
     /**
@@ -60,8 +48,8 @@ export class DailyTrainer {
         }));
     }
 
-    train(){
-        this.#exportDataset();
-        return this.#trainPython();
+    async train(){
+        await this.#exportDataset();
+        return await this.#trainPython();
     }
 }
