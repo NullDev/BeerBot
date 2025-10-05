@@ -23,14 +23,14 @@ while running:
         text = req.get("text", "").strip()
 
         if not text:
-            sys.stdout.write(json.dumps({"ok": True, "result": ""}) + "\n")
+            sys.stdout.write(json.dumps({"ok": True, "result": "", "parrot": False}) + "\n")
             sys.stdout.flush()
             continue
 
         from inference_core import generate
         result = generate(text)
 
-        sys.stdout.write(json.dumps({"ok": True, "result": result}) + "\n")
+        sys.stdout.write(json.dumps({"ok": True, "result": result["text"], "parrot": result["parrot"]}) + "\n")
         sys.stdout.flush()
 
     except Exception as e:

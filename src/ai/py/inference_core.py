@@ -14,6 +14,17 @@ MODEL_DIR = "./data/ai"
 
 LAST_REPLIES = deque(maxlen=10)
 
+# Load all target responses from dataset for parroting detection
+DATASET_RESPONSES = set()
+try:
+    with open(os.path.join(MODEL_DIR, "dataset.jsonl"), "r", encoding="utf-8") as f:
+        for line in f:
+            if line.strip():
+                data = json.loads(line)
+                DATASET_RESPONSES.add(data.get("target", "").strip().lower())
+except FileNotFoundError:
+    pass  # Dataset not available, skip parroting detection
+
 GENERIC_KENLM_PATH = os.path.join(MODEL_DIR, "generic_reranker.klm")
 g_lm = kenlm.Model(GENERIC_KENLM_PATH)
 
@@ -259,7 +270,17 @@ def strip_context_prefix(text: str) -> str:
     # Match [PREV: anything] at the start, followed by space
     return re.sub(r'^\[PREV:\s*.*?\]\s*', '', text)
 
-def generate(text: str) -> str:
+def is_parroting(response: str) -> bool:
+    """Check if response is an exact match from the training dataset."""
+    normalized = response.strip().lower()
+    return normalized in DATASET_RESPONSES
+
+def generate(text: str) -> dict:
     result = generate_candidates(text, n=10)
-    # Strip context prefix from output (user doesn't need to see it)
-    return strip_context_prefix(result)
+    is_parrot = is_parroting(result)
+    cleaned = strip_context_prefix(result)
+
+    return {
+        "text": cleaned,
+        "parrot": is_parrot
+    }

@@ -97,6 +97,7 @@ export class PythonAIWorker {
                     if (msg.ok){
                         Log.debug("[AIWorker] Inference request: '" + text + "'");
                         Log.debug("[AIWorker] Inference response: '" + msg.result + "'");
+                        Log.debug(msg.parrot ? "[AIWorker] Response is parroted from dataset" : "[AIWorker] Response is original (not in dataset)");
 
                         let cleaned = msg.result;
                         if (this.#emojiList){
