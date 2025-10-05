@@ -21,6 +21,7 @@ while running:
     try:
         req = json.loads(line)
         text = req.get("text", "").strip()
+        debug = req.get("debug", False)
 
         if not text:
             sys.stdout.write(json.dumps({"ok": True, "result": "", "parrot": False}) + "\n")
@@ -28,9 +29,13 @@ while running:
             continue
 
         from inference_core import generate
-        result = generate(text)
+        result = generate(text, debug=debug)
 
-        sys.stdout.write(json.dumps({"ok": True, "result": result["text"], "parrot": result["parrot"]}) + "\n")
+        response = {"ok": True, "result": result["text"], "parrot": result["parrot"]}
+        if debug and "debug" in result:
+            response["debug"] = result["debug"]
+
+        sys.stdout.write(json.dumps(response) + "\n")
         sys.stdout.flush()
 
     except Exception as e:

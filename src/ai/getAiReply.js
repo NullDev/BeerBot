@@ -81,14 +81,19 @@ export class PythonAIWorker {
      * Send text to the Python process for inference and get the response.
      *
      * @param {string} text
-     * @return {Promise<string>}
+     * @param {boolean} [debug=false] - Whether to return debug info
+     * @return {Promise<string|{text: string, debug: {
+     *  candidates: Array<{text: string, score: number, source: string, parrot: boolean,
+     *      breakdown: {[key: string]: number },
+     *      params: { temperature: number, top_p: number, top_k: number, repetition_penalty: number, min_len: number, max_new_tokens: number}
+     * }>, }, parrot: boolean}>}
      * @memberof PythonAIWorker
      */
-    infer(text){
+    infer(text, debug = false){
         if (!this.#ready) return Promise.reject(new Error("Python worker not running"));
 
         return new Promise((resolve, reject) => {
-            const req = JSON.stringify({ text }) + "\n";
+            const req = JSON.stringify({ text, debug }) + "\n";
             this.#proc.stdin.write(req);
 
             const onData = (/** @type {string} */ data) => {
@@ -107,7 +112,12 @@ export class PythonAIWorker {
                         }
                         cleaned = cleaned.trim();
 
-                        resolve(cleaned);
+                        if (debug && msg.debug){
+                            resolve({ text: cleaned, debug: msg.debug, parrot: msg.parrot });
+                        }
+                        else {
+                            resolve(cleaned);
+                        }
                     }
                     else reject(new Error(msg.error));
                 }

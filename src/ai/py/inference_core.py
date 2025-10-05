@@ -124,7 +124,7 @@ def context_relevance_score(src_text: str, candidate: str) -> float:
         return 0.5  # mild bonus for relevant words
     return 0.0
 
-def combined_score(src_text, candidate, lm_weight=0.3, repeat_penalty=5.0):
+def combined_score(src_text, candidate, lm_weight=0.3, repeat_penalty=5.0, return_breakdown=False):
     d_lm_s = d_lm.score(candidate, bos=True, eos=True)
     g_lm_s = g_lm.score(candidate, bos=True, eos=True)
     # Balance domain knowledge with grammar - both contribute positively
@@ -134,10 +134,25 @@ def combined_score(src_text, candidate, lm_weight=0.3, repeat_penalty=5.0):
     context_s = context_relevance_score(src_text, candidate)
 
     # stronger repetition penalty
+    repeat_penalty_applied = 0.0
     if candidate in LAST_REPLIES:
+        repeat_penalty_applied = repeat_penalty
         model_s -= repeat_penalty # big negative hit for repeats
 
-    return lm_weight * lm_s + (1 - lm_weight) * model_s + length_s + context_s
+    total = lm_weight * lm_s + (1 - lm_weight) * model_s + length_s + context_s
+
+    if return_breakdown:
+        return total, {
+            "domain_lm": float(d_lm_s),
+            "generic_lm": float(g_lm_s),
+            "combined_lm": float(lm_s),
+            "model": float(model_s + repeat_penalty_applied),  # show original model score
+            "length": float(length_s),
+            "context": float(context_s),
+            "repeat_penalty": float(repeat_penalty_applied),
+            "total": float(total)
+        }
+    return total
 
 def blocked_by_ngrams(candidate_id, out_ids, n=3):
     """Return True if adding candidate would create a repeated n-gram."""
@@ -149,7 +164,7 @@ def blocked_by_ngrams(candidate_id, out_ids, n=3):
             return True
     return False
 
-def generate_candidates(text: str, n: int = 10) -> str:
+def generate_candidates(text: str, n: int = 10, return_debug: bool = False):
     """Generate n candidate responses and return the one with the best combined score."""
     candidates = []
     for i in range(n):
@@ -173,11 +188,33 @@ def generate_candidates(text: str, n: int = 10) -> str:
             repetition_penalty=1.25,  # slightly stronger
             min_len=5
         )
-        candidates.append(cand)
 
-    # Score with combined scoring and pick the best
-    best = max(candidates, key=lambda c: combined_score(text, c))
+        # Store candidate with its sampling params
+        candidates.append({
+            "text": cand,
+            "params": {
+                "temperature": temp,
+                "top_p": top_p,
+                "top_k": top_k,
+                "repetition_penalty": 1.25,
+                "min_len": 5,
+                "max_new_tokens": min(MAXLEN, 48)
+            }
+        })
+
+    # Score all candidates
+    scored_candidates = []
+    for cand_info in candidates:
+        cand_text = cand_info["text"]
+        score, breakdown = combined_score(text, cand_text, return_breakdown=True)
+        scored_candidates.append((cand_text, score, is_parroting(cand_text), breakdown, cand_info["params"]))
+
+    # Pick the best by score
+    best, best_score, best_is_parrot, best_breakdown, best_params = max(scored_candidates, key=lambda x: x[1])
     LAST_REPLIES.append(best)
+
+    if return_debug:
+        return best, scored_candidates
     return best
 
 def apply_repetition_penalty(logits, used_ids, penalty=1.2):
@@ -305,12 +342,37 @@ def is_parroting(response: str) -> bool:
     normalized = response.strip().lower()
     return normalized in DATASET_RESPONSES
 
-def generate(text: str) -> dict:
-    result = generate_candidates(text, n=10)
-    is_parrot = is_parroting(result)
-    cleaned = strip_context_prefix(result)
+def generate(text: str, debug: bool = False) -> dict:
+    if debug:
+        result, all_candidates = generate_candidates(text, n=10, return_debug=True)
+        is_parrot = is_parroting(result)
+        cleaned = strip_context_prefix(result)
 
-    return {
-        "text": cleaned,
-        "parrot": is_parrot
-    }
+        # Format all candidates for debug output
+        debug_candidates = [
+            {
+                "text": strip_context_prefix(cand),
+                "score": float(score),
+                "parrot": parrot,
+                "breakdown": breakdown,
+                "params": params
+            }
+            for cand, score, parrot, breakdown, params in all_candidates
+        ]
+
+        return {
+            "text": cleaned,
+            "parrot": is_parrot,
+            "debug": {
+                "candidates": debug_candidates
+            }
+        }
+    else:
+        result = generate_candidates(text, n=10, return_debug=False)
+        is_parrot = is_parroting(result)
+        cleaned = strip_context_prefix(result)
+
+        return {
+            "text": cleaned,
+            "parrot": is_parrot
+        }
