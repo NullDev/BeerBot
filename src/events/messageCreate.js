@@ -103,7 +103,16 @@ const messageCreateHandler = async function(message){
                     const selectedIndex = sortedCandidates.findIndex(c => c.text === reply.text);
 
                     const overviewEmbed = new EmbedBuilder()
-                        .setTitle("🔍 AI Debug - LSTM Seq2Seq + Luong Attention + KenLM Reranker")
+                        .setTitle("🔍 AI Debug")
+                        .setDescription("**Type:** LSTM Seq2Seq + Luong Attention + KenLM Reranker")
+                        .addFields(
+                            { name: "Epochs", value: "`50`", inline: true },
+                            { name: "Loss", value: "`1.4860`", inline: true },
+                            { name: "Vocab Size", value: "`8000`", inline: true },
+                            { name: "Embedding Size", value: "`256`", inline: true },
+                            { name: "Hidden Size", value: "`256`", inline: true },
+                            { name: "Layers", value: "`2`", inline: true },
+                        )
                         .setColor(0x5865F2);
                     embeds.push(overviewEmbed);
 
