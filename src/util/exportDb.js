@@ -59,23 +59,32 @@ export default async function exportDb(){
     const out = pairs.map(p => {
         let {input} = p;
 
-        const prevMsg = db.query(`
+        // Get up to 3 previous messages for richer context
+        const prevMsgs = db.query(`
         SELECT content
         FROM messages
-        WHERE ts < ? AND ts > ? - 60000
+        WHERE ts < ? AND ts > ? - 120000
             AND content IS NOT NULL
             AND length(trim(content)) > 0
             AND content != ?
         ORDER BY ts DESC
-        LIMIT 1
-    `).get(p.ts, p.ts, p.input);
+        LIMIT 3
+    `).all(p.ts, p.ts, p.input);
 
-        if (prevMsg && prevMsg.content){
-            let ctx = prevMsg.content;
-            ctx = stripCode(stripUrls(stripMentions(ctx)));
-            ctx = normalize(ctx);
-            if (shouldKeep(ctx)){
-                input = `[PREV: ${ctx}] ${p.input}`;
+        if (prevMsgs && prevMsgs.length > 0){
+            const contexts = [];
+            for (const msg of prevMsgs.reverse()){ // oldest first
+                let ctx = msg.content;
+                ctx = stripCode(stripUrls(stripMentions(ctx)));
+                ctx = normalize(ctx);
+                if (shouldKeep(ctx)){
+                    contexts.push(ctx);
+                }
+            }
+
+            if (contexts.length > 0){
+                // Join multiple context messages with | separator
+                input = `[PREV: ${contexts.join(" | ")}] ${p.input}`;
             }
         }
 

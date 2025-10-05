@@ -60,14 +60,22 @@ const messageCreateHandler = async function(message){
             let query = cleanMsg(message);
 
             try {
-                const prevMessages = await message.channel.messages.fetch({ limit: 2, before: message.id });
+                const prevMessages = await message.channel.messages.fetch({ limit: 4, before: message.id });
                 if (prevMessages.size > 0){
-                    const prevMsg = prevMessages.first();
-                    if (prevMsg && !prevMsg.author.bot){
-                        const prevContent = cleanMsg(prevMsg);
-                        if (prevContent && prevContent.length > 0){
-                            query = `[PREV: ${prevContent}] ${query}`;
+                    const contexts = [];
+                    // Get up to 3 non-bot messages
+                    for (const [, msg] of prevMessages){
+                        if (!msg.author.bot && contexts.length < 3){
+                            const content = cleanMsg(msg);
+                            if (content && content.length > 0){
+                                contexts.push(content);
+                            }
                         }
+                    }
+
+                    if (contexts.length > 0){
+                        // Reverse to get chronological order, join with |
+                        query = `[PREV: ${contexts.reverse().join(" | ")}] ${query}`;
                     }
                 }
             }

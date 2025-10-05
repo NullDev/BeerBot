@@ -103,6 +103,27 @@ def seq2seq_log_prob(src_text: str, tgt_text: str) -> float:
 
     return float(log_prob)
 
+def context_relevance_score(src_text: str, candidate: str) -> float:
+    """Simple word overlap score between input and output for context coherence."""
+    # Extract the actual input (strip context prefix if present)
+    import re
+    actual_input = re.sub(r'^\[PREV:\s*.*?\]\s*', '', src_text).lower()
+
+    # Tokenize
+    input_words = set(actual_input.split())
+    output_words = set(candidate.lower().split())
+
+    if len(input_words) == 0 or len(output_words) == 0:
+        return 0.0
+
+    # Calculate word overlap (simple relevance heuristic)
+    overlap = len(input_words & output_words)
+
+    # Small bonus for having some overlap (but not too much, that would be parroting)
+    if overlap >= 1 and overlap <= 3:
+        return 0.5  # mild bonus for relevant words
+    return 0.0
+
 def combined_score(src_text, candidate, lm_weight=0.3, repeat_penalty=5.0):
     d_lm_s = d_lm.score(candidate, bos=True, eos=True)
     g_lm_s = g_lm.score(candidate, bos=True, eos=True)
@@ -110,12 +131,13 @@ def combined_score(src_text, candidate, lm_weight=0.3, repeat_penalty=5.0):
     lm_s = (0.3 * d_lm_s) + (0.15 * g_lm_s)
     model_s = seq2seq_log_prob(src_text, candidate)
     length_s = sentence_length_bonus(candidate)
+    context_s = context_relevance_score(src_text, candidate)
 
     # stronger repetition penalty
     if candidate in LAST_REPLIES:
         model_s -= repeat_penalty # big negative hit for repeats
 
-    return lm_weight * lm_s + (1 - lm_weight) * model_s + length_s
+    return lm_weight * lm_s + (1 - lm_weight) * model_s + length_s + context_s
 
 def blocked_by_ngrams(candidate_id, out_ids, n=3):
     """Return True if adding candidate would create a repeated n-gram."""
@@ -127,25 +149,33 @@ def blocked_by_ngrams(candidate_id, out_ids, n=3):
             return True
     return False
 
-def generate_candidates(text: str, n: int = 5) -> str:
-    """Generate n candidate responses and return the one with the best KenLM score."""
+def generate_candidates(text: str, n: int = 10) -> str:
+    """Generate n candidate responses and return the one with the best combined score."""
     candidates = []
-    for _ in range(n):
-        temp = random.uniform(0.6, 0.9)
-        top_p = random.uniform(0.8, 0.95)
-        top_k = random.randint(20, 50)
+    for i in range(n):
+        # Vary sampling parameters more for diversity
+        # First few: more conservative, later: more creative
+        if i < n // 2:
+            temp = random.uniform(0.7, 0.85)
+            top_p = random.uniform(0.85, 0.92)
+            top_k = random.randint(30, 50)
+        else:
+            temp = random.uniform(0.8, 1.0)  # higher temp for more diversity
+            top_p = random.uniform(0.88, 0.95)
+            top_k = random.randint(40, 60)
+
         cand = decode_sampled(
             text,
             max_new_tokens=min(MAXLEN, 48),
             top_p=top_p,
             top_k=top_k,
             temperature=temp,
-            repetition_penalty=1.20,
-            min_len=6
+            repetition_penalty=1.25,  # slightly stronger
+            min_len=5
         )
         candidates.append(cand)
 
-    # Score with KenLM and pick the best
+    # Score with combined scoring and pick the best
     best = max(candidates, key=lambda c: combined_score(text, c))
     LAST_REPLIES.append(best)
     return best
