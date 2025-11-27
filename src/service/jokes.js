@@ -9,6 +9,7 @@
  * @return {boolean}
  */
 const tooLoud = function(message){
+    if (message.length <= 10) return false;
     const individualCharacters = message.split("").filter((a) => !a.match(/\s/));
     if (message.indexOf(" ") === -1) return false;
     const uppercaseCharacters = individualCharacters.filter((a) =>
