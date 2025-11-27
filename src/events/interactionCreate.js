@@ -1,5 +1,5 @@
 import { BunDB } from "bun.db";
-import { MessageFlags } from "discord.js";
+import { MessageFlags, ButtonStyle } from "discord.js";
 import { startDMVerification, handleBirthdayPingButton, handleGenderSelection } from "../service/dmVerification/dmVerification.js";
 import { getAgeRole, removeExistingAgeRoles } from "../service/dmVerification/utils.js";
 import { deleteUserData } from "../commands/user/datenschutz.js";
@@ -133,8 +133,8 @@ const handleButton = async function(interaction){
             promptText: "⚠️ **Achtung!**\n\nBist da sicher, dasst olle deine Daten löschen wüst?\n\n**Des wird:**\n• Alle deine Verifikationsrollen entfernen\n• Dei Geburtsdatum löschen\n• Deine Geburtstag-Ping Einstellung löschen\n• Du musst di neu verifizieren\n\n**Diese Aktion kann ned rückgängig gemacht werden!**",
             yesText: "Jo, alle Daten löschen",
             noText: "Abbrechen",
-            yesStyle: "Danger",
-            noStyle: "Secondary",
+            yesStyle: ButtonStyle.Danger,
+            noStyle: ButtonStyle.Secondary,
             timeout: 30000, // 30 seconds
         });
 

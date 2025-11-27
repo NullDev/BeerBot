@@ -10,7 +10,15 @@ import { ActionRowBuilder, ButtonBuilder, ButtonStyle } from "discord.js";
  * Create a yes/no interaction
  *
  * @param {import("discord.js").CommandInteraction | import("discord.js").StringSelectMenuInteraction | import("discord.js").ButtonInteraction} interaction
- * @param {object} options
+ * @param {{
+ *   promptText: string|null,
+ *   yesText: string|null,
+ *   noText: string|null,
+ *   yesStyle: import("discord.js").ButtonStyle,
+ *   noStyle: import("discord.js").ButtonStyle,
+ *   showNoFirst?: boolean,
+ *   timeout: number
+ * }} options
  * @returns {Promise<string>}
  */
 const createYesNoInteraction = async function(interaction, {
@@ -48,7 +56,7 @@ const createYesNoInteraction = async function(interaction, {
         components: [row],
     });
 
-    const collectorFilter = i => i.user.id === interaction.user.id;
+    const collectorFilter = (/** @type {{ user: { id: string; }; }} */ i) => i.user.id === interaction.user.id;
     try {
         const confirmation = await response.awaitMessageComponent({
             filter: collectorFilter,
