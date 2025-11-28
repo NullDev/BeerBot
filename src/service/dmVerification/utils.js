@@ -18,7 +18,7 @@ export const getAgeRole = function(age){
     if (age >= 25 && age <= 29) return config.roles.ages["25_29"];
     if (age >= 30 && age <= 35) return config.roles.ages["30_35"];
     if (age >= 36 && age <= 39) return config.roles.ages["36_39"];
-    if (age >= 40) return config.roles["40+"];
+    if (age >= 40) return config.roles.ages["40+"];
     return null;
 };
 
@@ -72,9 +72,10 @@ export const calculateAge = function(dateInput){
  * Remove existing age roles from member
  *
  * @param {import("discord.js").GuildMember} member
+ * @param {boolean} [alsoRemoveGender=true]
  * @return {Promise<void>}
  */
-export const removeExistingAgeRoles = async function(member){
+export const removeExistingAgeRoles = async function(member, alsoRemoveGender = true){
     const ageRoleIds = Object.values(config.roles.ages);
     for (const roleId of ageRoleIds){
         if (roleId && member.roles.cache.has(roleId)){
@@ -82,6 +83,7 @@ export const removeExistingAgeRoles = async function(member){
         }
     }
 
+    if (!alsoRemoveGender) return;
     const genderRoleIds = Object.values(config.roles.gender);
     for (const roleId of genderRoleIds){
         if (roleId && member.roles.cache.has(roleId)){

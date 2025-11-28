@@ -132,7 +132,8 @@ const handleCountryRoleTransition = async function(member){
         if (roleId && member.roles.cache.has(roleId)){
             await member.roles.remove(roleId);
 
-            const verifiedRoleId = config.roles.country_verified[countryCode];
+            const key = /** @type {keyof typeof config.roles.country_verified} */ (countryCode);
+            const verifiedRoleId = config.roles.country_verified[key];
             if (verifiedRoleId){
                 await member.roles.add(verifiedRoleId);
             }
@@ -188,8 +189,11 @@ const completeVerification = async function(user, member, shouldAddRole){
             await member.roles.add(ageRoleId);
         }
 
-        if (gender && config.roles.gender[gender]){
-            await member.roles.add(config.roles.gender[gender]);
+        if (gender){
+            const genderKey = /** @type {keyof typeof config.roles.gender} */ (gender);
+            if (config.roles.gender[genderKey]){
+                await member.roles.add(config.roles.gender[genderKey]);
+            }
         }
 
         await db.set(`user-${userId}.verified`, true);
@@ -234,7 +238,7 @@ const completeVerification = async function(user, member, shouldAddRole){
 
         await gLogger(
             { user, guild: member.guild, client: member.client },
-            "🔷┃Verification Log - Error",
+            "🔷┃Verification Log - Error", // @ts-ignore
             `Fehler bei der Verifikation von ${user}:\n${error.message}`,
             "Red",
         );
@@ -374,7 +378,7 @@ const handleBirthdayPingButton = async function(interaction){
 
     if (!verificationState || !guildId || verificationState !== "waiting_ping"){
         await interaction.reply({
-            content: "❌ Du bist ned in der Verifikation oder der falsche Schritt.",
+            content: "❌ Du bist ned in der Verifikation oder das ist der falsche Schritt.",
             flags: [MessageFlags.Ephemeral],
         });
         return;

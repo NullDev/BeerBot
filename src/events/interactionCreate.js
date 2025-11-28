@@ -205,7 +205,7 @@ const handleModalSubmit = async function(interaction){
         const pingStatus = birthdayPing ? "Jo (aktiviert)" : "Na (deaktiviert)";
 
         if (!interaction.member) return null; // @ts-ignore
-        await removeExistingAgeRoles(interaction.member);
+        await removeExistingAgeRoles(interaction.member, false);
         const ageRole = getAgeRole(age); // @ts-ignore
         if (ageRole) await interaction.member.roles.add(ageRole);
 
