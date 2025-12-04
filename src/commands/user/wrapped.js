@@ -191,6 +191,7 @@ const getBundeslandPercentile = async function(userId, guild){
 
 /**
  * Calculate uniqueness percentile based on age, bundesland, and gender combination
+ * Uses role member counts instead of fetching all members for better performance
  *
  * @param {string} userId
  * @param {import("discord.js").Guild} guild
@@ -207,24 +208,27 @@ const getUniquenessPercentile = async function(userId, guild){
 
     if (!userAgeRole || !userGenderRole || !userBundeslandRole) return 0;
 
-    const members = await guild.members.fetch();
-    let sameComboCount = 0;
+    const ageRole = await guild.roles.fetch(userAgeRole);
+    const genderRole = await guild.roles.fetch(userGenderRole);
+    const bundeslandRole = await guild.roles.fetch(userBundeslandRole);
+    const verifiedRole = config.roles.verified ? await guild.roles.fetch(config.roles.verified) : null;
 
-    for (const [, guildMember] of members){
-        if (guildMember.roles.cache.has(userAgeRole) &&
-            guildMember.roles.cache.has(userGenderRole) &&
-            guildMember.roles.cache.has(userBundeslandRole)){
-            sameComboCount++;
-        }
-    }
+    if (!ageRole || !genderRole || !bundeslandRole) return 0;
 
-    const totalVerifiedMembers = members.filter(m =>
-        m.roles.cache.has(config.roles.verified),
-    ).size;
+    // This is an approximation: assume independence of roles for performance
+    const agePercent = ageRole.members.size;
+    const genderPercent = genderRole.members.size;
+    const bundeslandPercent = bundeslandRole.members.size;
+    const totalVerified = verifiedRole ? verifiedRole.members.size : guild.memberCount;
 
-    if (totalVerifiedMembers === 0) return 0;
+    if (totalVerified === 0) return 0;
 
-    const uniquenessScore = 100 - ((sameComboCount / totalVerifiedMembers) * 100);
+    // Rough estimate: multiply the percentages to get combo rarity
+    const estimatedComboSize = (agePercent / totalVerified) *
+                               (genderPercent / totalVerified) *
+                               (bundeslandPercent / totalVerified) * totalVerified;
+
+    const uniquenessScore = 100 - ((estimatedComboSize / totalVerified) * 100);
     return Math.max(0, Math.min(100, uniquenessScore));
 };
 
