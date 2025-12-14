@@ -48,6 +48,8 @@ export default {
     },
     channels: {
         general: "",
+        waiting_room_vc: "",
+        stammtisch_vc: "",
     },
     ai_included_channels: [
         "",
