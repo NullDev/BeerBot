@@ -22,6 +22,7 @@ const client = new DiscordClient({
         GatewayIntentBits.GuildMembers,
         GatewayIntentBits.DirectMessages,
         GatewayIntentBits.MessageContent,
+        GatewayIntentBits.GuildVoiceStates,
     ],
     partials: [
         Partials.Channel,
