@@ -38,7 +38,7 @@ const voiceStateUpdateHandler = async function(oldState, newState){
         const pings = membersInStammtisch.map(member => member.toString()).join(" ");
 
         await stammtischVoiceChannel.send({
-            content: `${pings}\nUser ${joiningUser} ist im Warteraum!`,
+            content: `${pings}\n${joiningUser} is im Warteraum!`,
         });
 
         Log.done(`User ${joiningUser?.user.displayName} joined waiting room. Pinged ${membersInStammtisch.size} members in stammtisch`);
