@@ -22,6 +22,11 @@ const voiceStateUpdateHandler = async function(oldState, newState){
         const {guild} = newState;
         const joiningUser = newState.member;
 
+        if (joiningUser?.user.bot){
+            Log.info(`Bot ${joiningUser.user.username} joined waiting room, ignoring`);
+            return;
+        }
+
         const stammtischVoiceChannel = await guild.channels.fetch(config.channels.stammtisch_vc);
         if (!stammtischVoiceChannel || !stammtischVoiceChannel.isVoiceBased()){
             Log.warn("Stammtisch voice channel not found or is not a voice channel");
@@ -38,7 +43,7 @@ const voiceStateUpdateHandler = async function(oldState, newState){
         const pings = membersInStammtisch.map(member => member.toString()).join(" ");
 
         await stammtischVoiceChannel.send({
-            content: `${pings}\n${joiningUser} is im Warteraum!`,
+            content: `${pings}\n\n${joiningUser} is im Warteraum!`,
         });
 
         Log.done(`User ${joiningUser?.user.displayName} joined waiting room. Pinged ${membersInStammtisch.size} members in stammtisch`);
