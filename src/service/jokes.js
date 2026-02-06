@@ -34,6 +34,7 @@ const jokes = async function(message){
         await message.react("🍻").catch(() => {});
     }
 
+    /*
     if (tooLoud(msg)){
         const responses = [
             "NED SO LAUT! Sonst bekommt Opi noch an Herzinfarkt <:kek:1398084145074278400>",
@@ -45,6 +46,7 @@ const jokes = async function(message){
         const response = responses[Math.floor(Math.random() * responses.length)];
         await message.reply(response).catch(() => {});
     }
+    */
 
     else if (cleanedMsg.startsWith("ich bin") || cleanedMsg.startsWith("i bin") || cleanedMsg.startsWith("i bims")){
         const words = cleanedMsg.split(" ").filter(Boolean);
