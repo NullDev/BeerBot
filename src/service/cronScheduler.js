@@ -6,13 +6,13 @@ import BirthdayChecker from "../crons/birthdayChecker.js";
 import UnverifiedUserCleanupHandler from "../crons/removeUnverifiedUsers.js";
 import NewcomerRoleCleanupHandler from "../crons/removeNewcomerRoles.js";
 import sendRandomMsg from "../util/sendRandomMsg.js";
-import { DailyTrainer } from "../crons/aiTrainer.js";
+// import { DailyTrainer } from "../crons/aiTrainer.js";
 
 // ========================= //
 // = Copyright (c) NullDev = //
 // ========================= //
 
-const trainer = new DailyTrainer();
+// const trainer = new DailyTrainer();
 
 /**
  * Schedule all crons
@@ -29,6 +29,7 @@ const scheduleCrons = async function(client){
     });
 
     // daily cron at 01:00
+    /*
     cron.schedule("0 1 * * *", async() => {
         try {
             await trainer.train();
@@ -38,6 +39,7 @@ const scheduleCrons = async function(client){
             Log.error("Error during AI training: " + e);
         }
     });
+    */
 
     // yearly cron on January 1st at 00:00
     cron.schedule("0 0 1 1 *", async() => {
