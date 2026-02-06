@@ -57,9 +57,11 @@ const scheduleCrons = async function(client){
     });
 
     // every day at 13:37
+    /*
     cron.schedule("37 13 * * *", async() => {
         await sendRandomMsg(client);
     });
+    */
 
     const cronCount = cron.getTasks().size;
     Log.done("Scheduled " + cronCount + " Crons.");
