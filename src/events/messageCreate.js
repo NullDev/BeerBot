@@ -55,6 +55,8 @@ const messageCreateHandler = async function(message){
 
         const channelId = message.channel.id; // @ts-ignore
         if (message.mentions.has(message.client.user)){
+            return;
+            
             if (message.content.trim() === `<@!${message.client.user?.id}>`) return;
             message.channel.sendTyping();
             let query = cleanMsg(message);
@@ -156,7 +158,7 @@ const messageCreateHandler = async function(message){
                 await message.reply("Fehler: Bot moch grod ned so beep boop wie er soll... Frag Shadow warum er nix kann");
             }
         }
-        if (config.ai_included_channels.includes(channelId)){
+        /* if (config.ai_included_channels.includes(channelId)){
             brain.learn({
                 id: message.id,
                 content: cleanMsg(message) || "", // @ts-ignore
@@ -164,7 +166,7 @@ const messageCreateHandler = async function(message){
                 replyToId: message.reference?.messageId ?? null,
                 timestamp: message.createdTimestamp,
             });
-        }
+        } */
     }
 };
 
