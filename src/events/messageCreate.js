@@ -2,9 +2,9 @@ import { ChannelType } from "discord.js";
 import { handleDMVerification } from "../service/dmVerification/dmVerification.js";
 import jokes from "../service/jokes.js";
 import { MessageLearner } from "../ai/MessageLearner.js";
-import { PythonAIWorker } from "../ai/getAiReply.js";
-import Log from "../util/log.js";
-import { config } from "../../config/config.js";
+// import { PythonAIWorker } from "../ai/getAiReply.js";
+// import Log from "../util/log.js";
+// import { config } from "../../config/config.js";
 
 // ========================= //
 // = Copyright (c) NullDev = //
@@ -13,13 +13,13 @@ import { config } from "../../config/config.js";
 const brain = new MessageLearner();
 await brain.init();
 
-const aiWorker = new PythonAIWorker();
+// const aiWorker = new PythonAIWorker();
 
 /**
  * Get the bot name for mentions, try the nickname of the bot in the guild first, then display name
  *
  * @param {import("discord.js").Message} message
- */
+ */ /*
 const getBotName = message => {
     if (message.guild){
         const member = message.guild.members.cache.get(message.client.user.id);
@@ -27,16 +27,18 @@ const getBotName = message => {
     }
     return message.client.user.displayName;
 };
+*/
 
 /**
  * Clean message content by removing mentions and trimming whitespace
  *
  * @param {import("discord.js").Message} message
- */
+ */ /*
 const cleanMsg = message => message.cleanContent.replace(/<a?(:[a-zA-Z0-9_]+:)[0-9]+>/g, "$1")
     .replace(`<@${message.client.user.id}>`, "")
     .replace(`@${getBotName(message)} `, "")
     .trim();
+*/
 
 /**
  * Handle messageCreate event
@@ -53,10 +55,11 @@ const messageCreateHandler = async function(message){
     else if (message.channel.type === ChannelType.GuildText && !message.author.bot){
         await jokes(message);
 
-        const channelId = message.channel.id; // @ts-ignore
+        // const channelId = message.channel.id; // @ts-ignore
         if (message.mentions.has(message.client.user)){
             return;
-            
+
+            /*
             if (message.content.trim() === `<@!${message.client.user?.id}>`) return;
             message.channel.sendTyping();
             let query = cleanMsg(message);
@@ -157,6 +160,7 @@ const messageCreateHandler = async function(message){
                 Log.error("[AIWorker] Inference error:", err);
                 await message.reply("Fehler: Bot moch grod ned so beep boop wie er soll... Frag Shadow warum er nix kann");
             }
+            */
         }
         /* if (config.ai_included_channels.includes(channelId)){
             brain.learn({

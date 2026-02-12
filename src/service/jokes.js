@@ -7,7 +7,7 @@
  *
  * @param {string} message
  * @return {boolean}
- */
+ */ /*
 const tooLoud = function(message){
     if (message.length <= 10) return false;
     const individualCharacters = message.split("").filter((a) => !a.match(/\s/));
@@ -17,6 +17,7 @@ const tooLoud = function(message){
     ).length;
     return uppercaseCharacters / individualCharacters.length >= 0.6;
 };
+*/
 
 /**
  * Handle messageCreate event
