@@ -5,7 +5,7 @@ import UserCleanupHandler from "../crons/removeNonExistingUser.js";
 import BirthdayChecker from "../crons/birthdayChecker.js";
 import UnverifiedUserCleanupHandler from "../crons/removeUnverifiedUsers.js";
 import NewcomerRoleCleanupHandler from "../crons/removeNewcomerRoles.js";
-import sendRandomMsg from "../util/sendRandomMsg.js";
+// import sendRandomMsg from "../util/sendRandomMsg.js";
 // import { DailyTrainer } from "../crons/aiTrainer.js";
 
 // ========================= //
