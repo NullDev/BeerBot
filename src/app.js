@@ -5,6 +5,7 @@ import { GatewayIntentBits, Events, ActivityType, Partials } from "discord.js";
 import Log from "./util/log.js";
 import { config, meta } from "../config/config.js";
 import DiscordClient from "./service/client.js";
+import api from "./service/api.js";
 import clientReady from "./events/clientReady.js";
 import shardReady from "./events/shardReady.js";
 import guildMemberUpdate from "./events/guildMemberUpdate.js";
@@ -89,6 +90,8 @@ client.on(Events.Error, err => Log.error("Client error.", err));
 client.login(config.discord.bot_token)
     .then(() => Log.done("Logged in!"))
     .catch(err => Log.error("Failed to login: ", err));
+
+api(client);
 
 process.on("unhandledRejection", (
     /** @type {Error} */ err,
