@@ -12,7 +12,7 @@ const { secret, port } = config.api;
  * @param {import("../service/client.js").default} client
  */
 const api = function(client){
-    const app = fastify();
+    const app = fastify({ trustProxy: true });
 
     app.register(cors, { origin: "*" });
     app.register(helmet);
