@@ -19,6 +19,7 @@ const api = function(client){
 
     app.addHook("onRequest", async(request, reply) => {
         if (request.headers.authorization !== secret){
+            Log.warn("Unauthorized API access attempt from " + request.ip);
             return reply.code(401).send({ error: "Unauthorized" });
         }
         return null;
