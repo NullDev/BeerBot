@@ -63,6 +63,19 @@ Once the config has been copied like described in [Step 4](#wrench-setup), it ca
 | openai: <br> `token` | OpenAI Token for Welcome Msg | string | N/A |
 | openai: <br> `model` | Which model to use for Welcome Msg | string | "gpt-4" |
 
+Stats API: 
+
+```nginx
+location /stats {
+    proxy_set_header Host $host;
+    proxy_set_header X-Real-IP $remote_addr;
+    add_header 'Access-Control-Allow-Origin' '';
+
+    proxy_redirect off;
+    proxy_pass http://127.0.0.1:1334$request_uri;
+}    
+```
+
 <hr>
 
 <img height="auto" width="100%" src="/assets/banner-crop.jpg" />
