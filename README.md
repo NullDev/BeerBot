@@ -47,6 +47,8 @@ Once the config has been copied like described in [Step 4](#wrench-setup), it ca
 | ---------- | --------- | ------------------ | ------------ |
 | discord: <br> `bot_token` | Auth Token of the Discord bot. Can be created [here](https://discordapp.com/developers/). | String | N/A |
 | discord: <br> `bot_owner_ids` | OPTIONAL: Discord IDs of Bot owners | String-Array | [] |
+| api: <br> `port` | Port the API should listen on | number | 3000 |
+| api: <br> `secret` | Secret to authenticate API requests | string | N/A |
 | roles: <br> `verified` | ID of the verified role | string | N/A |
 | roles: <br> `unverified` | ID of the verified role | string | N/A |
 | roles: <br> `newcommer` | ID of the newcommer role | string | N/A |

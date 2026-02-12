@@ -3,6 +3,10 @@ export default {
         bot_token: "",
         bot_owner_ids: [],
     },
+    api: {
+        port: 3000,
+        secret: "",
+    },
     roles: {
         newcommer: "",
         verified: "",
