@@ -5,6 +5,11 @@ import Log from "../util/log.js";
 // = Copyright (c) NullDev = //
 // ========================= //
 
+const WAITING_ROOM_PAIRS = [
+    { waitingRoom: "waiting_room_vc", mainVc: "stammtisch_vc", label: "stammtisch" },
+    { waitingRoom: "mausi_waiting_room_vc", mainVc: "mausi_vc", label: "mausi" },
+];
+
 /**
  * Handle voiceStateUpdate event
  *
@@ -14,10 +19,11 @@ import Log from "../util/log.js";
  */
 const voiceStateUpdateHandler = async function(oldState, newState){
     try {
-        const joinedWaitingRoom = newState.channelId === config.channels.waiting_room_vc
-            && oldState.channelId !== config.channels.waiting_room_vc;
+        const pair = WAITING_ROOM_PAIRS.find( // @ts-ignore
+            ({ waitingRoom }) => newState.channelId === config.channels[waitingRoom] && oldState.channelId !== config.channels[waitingRoom],
+        );
 
-        if (!joinedWaitingRoom) return;
+        if (!pair) return;
 
         const {guild} = newState;
         const joiningUser = newState.member;
@@ -27,26 +33,27 @@ const voiceStateUpdateHandler = async function(oldState, newState){
             return;
         }
 
-        const stammtischVoiceChannel = await guild.channels.fetch(config.channels.stammtisch_vc);
-        if (!stammtischVoiceChannel || !stammtischVoiceChannel.isVoiceBased()){
-            Log.warn("Stammtisch voice channel not found or is not a voice channel");
+        // @ts-ignore
+        const mainVoiceChannel = await guild.channels.fetch(config.channels[pair.mainVc]);
+        if (!mainVoiceChannel || !mainVoiceChannel.isVoiceBased()){
+            Log.warn(`${pair.label} voice channel not found or is not a voice channel`);
             return;
         }
 
-        const membersInStammtisch = stammtischVoiceChannel.members;
+        const membersInMain = mainVoiceChannel.members;
 
-        if (membersInStammtisch.size === 0){
-            Log.info(`User ${joiningUser?.user.displayName} joined waiting room, but no one is in stammtisch voice channel`);
+        if (membersInMain.size === 0){
+            Log.info(`User ${joiningUser?.user.displayName} joined waiting room, but no one is in ${pair.label} voice channel`);
             return;
         }
 
-        const pings = membersInStammtisch.map(member => member.toString()).join(" ");
+        const pings = membersInMain.map(member => member.toString()).join(" ");
 
-        await stammtischVoiceChannel.send({
-            content: `${pings}\n\n${joiningUser} is im Warteraum!`,
+        await mainVoiceChannel.send({
+            content: `${pings}\n\n${joiningUser} is im ${pair.label} Warteraum!`,
         });
 
-        Log.done(`User ${joiningUser?.user.displayName} joined waiting room. Pinged ${membersInStammtisch.size} members in stammtisch`);
+        Log.done(`User ${joiningUser?.user.displayName} joined waiting room. Pinged ${membersInMain.size} members in ${pair.label}`);
     }
     catch (error){
         Log.error("Error handling voice state update:", error);

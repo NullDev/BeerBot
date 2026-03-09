@@ -54,6 +54,8 @@ export default {
         general: "",
         waiting_room_vc: "",
         stammtisch_vc: "",
+        mausi_waiting_room_vc: "",
+        mausi_vc: "",
     },
     ai_included_channels: [
         "",

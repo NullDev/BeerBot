@@ -60,6 +60,8 @@ Once the config has been copied like described in [Step 4](#wrench-setup), it ca
 | channels: <br> `general` | ID of the general chat to announce bdays | string | N/A |
 | channels: <br> `waiting_room_vc` | ID of the waiting room voice channel | string | N/A |
 | channels: <br> `stammtisch_vc` | ID of the stammtisch voice channel | string | N/A |
+| channels: <br> `mausi_waiting_room_vc` | ID of the mausi waiting room voice channel | string | N/A |
+| channels: <br> `mausi_vc` | ID of the mausi voice channel | string | N/A |
 | openai: <br> `token` | OpenAI Token for Welcome Msg | string | N/A |
 | openai: <br> `model` | Which model to use for Welcome Msg | string | "gpt-4" |
 
