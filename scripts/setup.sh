@@ -10,7 +10,7 @@ source .venv/bin/activate
 
 # Upgrade pip + install deps
 pip install --upgrade pip
-pip install numpy scipy scikit-learn
+pip install numpy scikit-learn
 # pip install -r src/ai/py/requirements.txt
 
 echo "Setup complete!"
