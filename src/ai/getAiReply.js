@@ -1,6 +1,6 @@
 import os from "node:os";
 import fs from "node:fs";
-import { spawn } from "node:child_process";
+import { spawn, spawnSync } from "node:child_process";
 import Log from "../util/log";
 
 // ========================= //
@@ -40,12 +40,21 @@ export class PythonAIWorker {
      * @memberof DailyTrainer
      */
     #getPyPath(){
-        if (os.platform() === "win32"){
-            const winVenv = ".venv\\Scripts\\python.exe";
-            return fs.existsSync(winVenv) ? winVenv : "python";
+        const candidates = os.platform() === "win32"
+            ? [".venv\\Scripts\\python.exe", "python"]
+            : ["./.venv/bin/python", "python3", "python"];
+
+        for (const py of candidates){
+            if (!py.includes("/") && !py.includes("\\")){
+                return py;
+            }
+            if (fs.existsSync(py)){
+                const check = spawnSync(py, ["-c", "import sklearn"], { timeout: 5000 });
+                if (check.status === 0) return py;
+                Log.warn(`[AIWorker] ${py} missing sklearn, trying next…`);
+            }
         }
-        const linuxVenv = "./.venv/bin/python";
-        return fs.existsSync(linuxVenv) ? linuxVenv : "python";
+        return "python3";
     }
 
     /**
