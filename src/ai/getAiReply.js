@@ -1,4 +1,5 @@
 import os from "node:os";
+import fs from "node:fs";
 import { spawn } from "node:child_process";
 import Log from "../util/log";
 
@@ -40,9 +41,11 @@ export class PythonAIWorker {
      */
     #getPyPath(){
         if (os.platform() === "win32"){
-            return ".venv\\Scripts\\python.exe";
+            const winVenv = ".venv\\Scripts\\python.exe";
+            return fs.existsSync(winVenv) ? winVenv : "python";
         }
-        return "./.venv/bin/python";
+        const linuxVenv = "./.venv/bin/python";
+        return fs.existsSync(linuxVenv) ? linuxVenv : "python";
     }
 
     /**
