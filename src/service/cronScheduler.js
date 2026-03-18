@@ -7,6 +7,7 @@ import UnverifiedUserCleanupHandler from "../crons/removeUnverifiedUsers.js";
 import NewcomerRoleCleanupHandler from "../crons/removeNewcomerRoles.js";
 // import sendRandomMsg from "../util/sendRandomMsg.js";
 // import { DailyTrainer } from "../crons/aiTrainer.js";
+import pingRandom from "../crons/pingRandom.js";
 
 // ========================= //
 // = Copyright (c) NullDev = //
@@ -57,11 +58,10 @@ const scheduleCrons = async function(client){
     });
 
     // every day at 13:37
-    /*
     cron.schedule("37 13 * * *", async() => {
-        await sendRandomMsg(client);
+        // await sendRandomMsg(client);
+        await pingRandom(client);
     });
-    */
 
     const cronCount = cron.getTasks().size;
     Log.done("Scheduled " + cronCount + " Crons.");

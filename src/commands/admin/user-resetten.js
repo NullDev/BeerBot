@@ -104,12 +104,13 @@ export default {
             });
         }
         catch (error){
+            const errorMessage = error instanceof Error ? error.message : String(error);
             Log.error(`Error during user reset for ${targetUser.displayName}:`, error);
 
             await gLogger( // @ts-ignore
                 interaction,
                 "🔷┃User Reset - Error",
-                `Fehler beim Zurücksetzen von ${targetUser} durch ${interaction.user}:\n${error.message}`,
+                `Fehler beim Zurücksetzen von ${targetUser} durch ${interaction.user}:\n${errorMessage}`,
                 "Red",
             );
 
