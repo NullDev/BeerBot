@@ -6,6 +6,8 @@ import Log from "../util/log";
 // = Copyright (c) NullDev = //
 // ========================= //
 
+/** @typedef {import("node:child_process").ChildProcess} ChildProcess */
+
 /*
  * Manages a Python AI inference server process.
  *
@@ -13,8 +15,9 @@ import Log from "../util/log";
  * @class PythonAIWorker
  */
 export class PythonAIWorker {
-    // @ts-ignore
-    #proc;
+    /** @type {ChildProcess | null} */
+    #proc = null;
+    /** @type {boolean} */
     #ready;
 
     /**
@@ -53,10 +56,10 @@ export class PythonAIWorker {
         });
 
         this.#proc.on("spawn", () => {
-            Log.done("[AIWorker] Python AI Worker started with PID " + this.#proc.pid);
+            Log.done("[AIWorker] Python AI Worker started with PID " + this.#proc?.pid);
         });
 
-        this.#proc.stdout.setEncoding("utf8");
+        this.#proc.stdout?.setEncoding("utf8");
 
         this.#proc.on("error", (/** @type {Error} */ err) => {
             Log.error("[AIWorker] Failed to start Python process:", err);
@@ -83,7 +86,7 @@ export class PythonAIWorker {
 
         return new Promise((resolve, reject) => {
             const req = JSON.stringify({ text }) + "\n";
-            this.#proc.stdin.write(req);
+            this.#proc?.stdin?.write(req);
 
             const onData = (/** @type {string} */ data) => {
                 try {
@@ -99,17 +102,17 @@ export class PythonAIWorker {
                     reject(e);
                 }
                 finally {
-                    this.#proc.stdout.off("data", onData);
+                    this.#proc?.stdout?.off("data", onData);
                 }
             };
 
-            this.#proc.stdout.on("data", onData);
+            this.#proc?.stdout?.on("data", onData);
         });
     }
 
     stop(){
         if (this.#proc){
-            this.#proc.stdin.end();
+            this.#proc?.stdin?.end();
             this.#proc.kill("SIGTERM");
             this.#proc = null;
             this.#ready = false;
