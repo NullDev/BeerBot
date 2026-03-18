@@ -1,5 +1,4 @@
 import os from "node:os";
-import fs from "node:fs";
 import { spawn } from "node:child_process";
 import Log from "../util/log";
 
@@ -17,22 +16,17 @@ export class PythonAIWorker {
     // @ts-ignore
     #proc;
     #ready;
-    #emojiList;
 
     /**
      * Creates an instance of PythonAIWorker.
      *
-     * @param {string} [scriptPath="./src/ai/py/inference.py"]
+     * @param {string} [scriptPath="./src/ai/brain.py"]
      * @memberof PythonAIWorker
      */
-    constructor(scriptPath = "./src/ai/py/inference.py"){
+    constructor(scriptPath = "./src/ai/brain.py"){
         this.scriptPath = scriptPath;
         this.#ready = false;
         this.#start();
-
-        if (fs.existsSync("./data/emojis.json")){
-            this.#emojiList = JSON.parse(fs.readFileSync("./data/emojis.json", "utf-8"));
-        }
     }
 
     /**
@@ -54,7 +48,7 @@ export class PythonAIWorker {
      * @memberof PythonAIWorker
      */
     #start(){
-        this.#proc = spawn(this.#getPyPath(), [this.scriptPath], {
+        this.#proc = spawn(this.#getPyPath(), [this.scriptPath, "--serve"], {
             stdio: ["pipe", "pipe", "inherit"], // stdin, stdout, stderr
         });
 
@@ -81,19 +75,14 @@ export class PythonAIWorker {
      * Send text to the Python process for inference and get the response.
      *
      * @param {string} text
-     * @param {boolean} [debug=false] - Whether to return debug info
-     * @return {Promise<string|{text: string, debug: {
-     *  candidates: Array<{text: string, score: number, source: string, parrot: boolean,
-     *      breakdown: {[key: string]: number },
-     *      params: { temperature: number, top_p: number, top_k: number, repetition_penalty: number, min_len: number, max_new_tokens: number}
-     * }>, }, parrot: boolean}>}
+     * @return {Promise<string>}
      * @memberof PythonAIWorker
      */
-    infer(text, debug = false){
+    infer(text){
         if (!this.#ready) return Promise.reject(new Error("Python worker not running"));
 
         return new Promise((resolve, reject) => {
-            const req = JSON.stringify({ text, debug }) + "\n";
+            const req = JSON.stringify({ text }) + "\n";
             this.#proc.stdin.write(req);
 
             const onData = (/** @type {string} */ data) => {
@@ -102,22 +91,7 @@ export class PythonAIWorker {
                     if (msg.ok){
                         Log.debug("[AIWorker] Inference request: '" + text + "'");
                         Log.debug("[AIWorker] Inference response: '" + msg.result + "'");
-                        Log.debug(msg.parrot ? "[AIWorker] Response is parroted from dataset" : "[AIWorker] Response is original (not in dataset)");
-
-                        let cleaned = msg.result;
-                        if (this.#emojiList){
-                            for (const [key, value] of Object.entries(this.#emojiList)){
-                                cleaned = cleaned.replaceAll(key, value);
-                            }
-                        }
-                        cleaned = cleaned.trim();
-
-                        if (debug && msg.debug){
-                            resolve({ text: cleaned, debug: msg.debug, parrot: msg.parrot });
-                        }
-                        else {
-                            resolve(cleaned);
-                        }
+                        resolve(msg.result.trim());
                     }
                     else reject(new Error(msg.error));
                 }
