@@ -2,6 +2,8 @@ import { ChannelType } from "discord.js";
 import { handleDMVerification } from "../service/dmVerification/dmVerification.js";
 import jokes from "../service/jokes.js";
 import { PythonAIWorker } from "../ai/getAiReply.js";
+import { MessageLearner } from "../ai/MessageLearner.js";
+import { config } from "../../config/config.js";
 import Log from "../util/log.js";
 
 // ========================= //
@@ -9,6 +11,9 @@ import Log from "../util/log.js";
 // ========================= //
 
 const aiWorker = new PythonAIWorker();
+
+const brain = new MessageLearner();
+await brain.init();
 
 /**
  * Get the bot name for mentions, try the nickname of the bot in the guild first, then display name
@@ -47,6 +52,17 @@ const messageCreateHandler = async function(message){
 
     else if (message.channel.type === ChannelType.GuildText && !message.author.bot){
         await jokes(message);
+
+        if (config.ai_included_channels.includes(message.channelId)){
+            brain.learn({
+                id: message.id,
+                content: message.content,
+                channelId: message.channelId, // @ts-ignore
+                authorId: message.author.id,
+                replyToId: message.reference?.messageId ?? null,
+                createdTimestamp: message.createdTimestamp,
+            });
+        }
 
         // @ts-ignore
         if (message.mentions.has(message.client.user)){
