@@ -1,22 +1,22 @@
 import re
 import sys
 import json
+import math
 import random
 import sqlite3
 import os
-from collections import defaultdict, deque
+from collections import defaultdict, deque, Counter
 from difflib import get_close_matches
+from typing import List, Optional, Dict, Tuple
 
 import numpy as np
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics.pairwise import cosine_similarity
-from typing import List, Optional
 
 _BASE = os.path.join(os.path.dirname(os.path.abspath(__file__)), "../../data")
 DB_PATH = os.path.join(_BASE, "brain.sqlite")
 EMOJI_PATH = os.path.join(_BASE, "emojis.json")
 
-# Emoji resolver
 class EmojiResolver:
     def __init__(self, path: str = EMOJI_PATH):
         with open(path, encoding="utf-8") as f:
@@ -25,10 +25,9 @@ class EmojiResolver:
         self._names = [k.strip(":") for k in self._map]
 
     def resolve(self, text: str) -> str:
-        """Replace all :name: tokens in text with Discord emoji or remove them."""
         def replace(m):
             token = m.group(0) # e.g. ":cryingcat:"
-            name  = m.group(1) # e.g. "cryingcat"
+            name = m.group(1)  # e.g. "cryingcat"
             # exact match
             if token in self._map:
                 return self._map[token]
@@ -40,8 +39,8 @@ class EmojiResolver:
             return ""
         return re.sub(r":([A-Za-z0-9_]+):", replace, text).strip()
 
+
 def normalize(text: str) -> str:
-    """Lowercase, strip punctuation noise, collapse whitespace."""
     text = text.lower().strip()
     text = re.sub(r"<@!?\d+>", "", text)     # remove Discord mentions
     text = re.sub(r"<a?:\w+:\d+>", "", text) # remove custom emojis
@@ -49,116 +48,197 @@ def normalize(text: str) -> str:
     text = re.sub(r"\s+", " ", text).strip()
     return text
 
+
 def tokenize(text: str) -> List[str]:
     return normalize(text).split()
 
-# Markov chain (trigram with bigram + unigram fallback)
+
+def is_question(text: str) -> bool:
+    t = normalize(text)
+    return "?" in text or any(w in t.split() for w in [
+        "warum", "wieso", "weshoib", "wie", "wer", "wo", "wos", "wann", "eh"
+    ])
+
+
+def lexical_overlap(a: str, b: str) -> float:
+    aa = set(tokenize(a))
+    bb = set(tokenize(b))
+    if not aa or not bb:
+        return 0.0
+    return len(aa & bb) / len(aa | bb)
+
+
+def looks_generic(text: str) -> bool:
+    t = normalize(text)
+    toks = tokenize(t)
+    generic = {
+        "ja", "jo", "ok", "oke", "safe", "aso", "ahso", "fix",
+        "lol", "lmao", "xd", "haha", "hahaha", "ne", "na",
+        "gut", "passt", "k", "kk"
+    }
+    return len(toks) <= 2 and all(tok in generic for tok in toks)
+
+
 class MarkovBrain:
     def __init__(self):
-        self.trigrams: dict = defaultdict(list)
-        self.bigrams:  dict = defaultdict(list)
-        self.starters: list = []
+        self.trigrams: Dict[Tuple[str, str], List[str]] = defaultdict(list)
+        self.bigrams: Dict[str, List[str]] = defaultdict(list)
+        self.starters: List[Tuple[str, ...]] = []
 
     def train(self, messages: List[str]):
         for msg in messages:
             words = tokenize(msg)
             if not words:
                 continue
-            self.starters.append(words[0])
+            if len(words) >= 2:
+                self.starters.append((words[0], words[1]))
+            else:
+                self.starters.append((words[0],))
+
             for i in range(len(words)):
                 if i + 2 < len(words):
-                    self.trigrams[(words[i], words[i+1])].append(words[i+2])
+                    self.trigrams[(words[i], words[i + 1])].append(words[i + 2])
                 if i + 1 < len(words):
-                    self.bigrams[words[i]].append(words[i+1])
+                    self.bigrams[words[i]].append(words[i + 1])
 
-    def generate(self, seed: str = "", max_words: int = 30) -> str:
+    def generate(self, seed: str = "", max_words: int = 20) -> str:
         words = tokenize(seed)
+        result: List[str] = []
 
-        # pick a starter word
-        if words and words[-1] in self.bigrams: current = words[-1]
-        elif words and len(words) >= 2 and (words[-2], words[-1]) in self.trigrams: current = words[-2]
-        elif self.starters: current = random.choice(self.starters)
-        else: return ""
+        if len(words) >= 2 and (words[-2], words[-1]) in self.trigrams:
+            result = [words[-2], words[-1]]
+        elif len(words) >= 1 and words[-1] in self.bigrams:
+            result = [words[-1]]
+        elif self.starters:
+            result = list(random.choice(self.starters))
+        else:
+            return ""
 
-        result = [current]
-        for _ in range(max_words):
-            prev2 = (result[-2], result[-1]) if len(result) >= 2 else None
-            prev1 = result[-1]
-
-            if prev2 and prev2 in self.trigrams: nxt = random.choice(self.trigrams[prev2])
-            elif prev1 in self.bigrams: nxt = random.choice(self.bigrams[prev1])
-            else: break
-            result.append(nxt)
-            # natural stopping: short messages are authentic here
-            if len(result) >= 6 and random.random() < 0.25:
+        while len(result) < max_words:
+            if len(result) >= 2 and (result[-2], result[-1]) in self.trigrams:
+                nxt = random.choice(self.trigrams[(result[-2], result[-1])])
+            elif result[-1] in self.bigrams:
+                nxt = random.choice(self.bigrams[result[-1]])
+            else:
                 break
-        return " ".join(result)
-    
-# Retrieval layer (TF-IDF cosine similarity over pairs.parentKey)
+
+            # avoid ugly loops
+            if len(result) >= 3 and nxt == result[-1] == result[-2]:
+                break
+
+            result.append(nxt)
+
+            if len(result) >= 5 and random.random() < 0.22:
+                break
+
+        return " ".join(result).strip()
+
+    def continue_from(self, prefix: str, extra_words: int = 8) -> str:
+        base = tokenize(prefix)
+        if not base:
+            return ""
+
+        result = base[:]
+        while len(result) < len(base) + extra_words:
+            if len(result) >= 2 and (result[-2], result[-1]) in self.trigrams:
+                nxt = random.choice(self.trigrams[(result[-2], result[-1])])
+            elif result[-1] in self.bigrams:
+                nxt = random.choice(self.bigrams[result[-1]])
+            else:
+                break
+
+            if nxt in result[-4:]:
+                break
+
+            result.append(nxt)
+
+            if len(result) >= len(base) + 3 and random.random() < 0.35:
+                break
+
+        return " ".join(result).strip()
+
+
 class RetrievalBrain:
     def __init__(self):
-        self.keys: list[str] = []
-        self.replies: list[str] = []
+        self.keys: List[str] = []
+        self.replies: List[str] = []
+        self.reply_norms: List[str] = []
+        self.reply_freq: Counter = Counter()
         self.vectorizer: Optional[TfidfVectorizer] = None
         self.matrix = None
 
     def train(self, keys: List[str], replies: List[str]):
-        self.keys = [normalize(k) for k in keys]
-        self.replies = replies
+        cleaned = []
+        for k, r in zip(keys, replies):
+            nk = normalize(k)
+            nr = normalize(r)
+            if nk and nr:
+                cleaned.append((nk, r, nr))
+
+        if not cleaned:
+            self.keys, self.replies, self.reply_norms = [], [], []
+            return
+
+        self.keys = [k for k, _, _ in cleaned]
+        self.replies = [r for _, r, _ in cleaned]
+        self.reply_norms = [nr for _, _, nr in cleaned]
+        self.reply_freq = Counter(self.reply_norms)
+
         self.vectorizer = TfidfVectorizer(
-            analyzer="char_wb", # char n-grams handle dialect + typos better
-            ngram_range=(2, 4),
+            analyzer="char_wb",
+            ngram_range=(2, 5),
             min_df=1,
+            sublinear_tf=True,
         )
         self.matrix = self.vectorizer.fit_transform(self.keys)
 
-    def query(self, text: str, threshold: float = 0.25, exclude: set = None) -> Optional[str]:
-        if self.vectorizer is None or not text.strip():
-            return None
-        vec = self.vectorizer.transform([normalize(text)])
-        sims = cosine_similarity(vec, self.matrix).flatten()
-        best_idx = int(np.argmax(sims))
-        best_score = float(sims[best_idx])
-        if best_score >= threshold:
-            # widen pool to ±0.15 of best score for variety, still above threshold
-            candidates = [
-                self.replies[i]
-                for i, s in enumerate(sims)
-                if s >= max(best_score - 0.15, threshold) and self.replies[i].strip()
-                and (exclude is None or self.replies[i] not in exclude)
-            ]
-            if not candidates:
-                # exclusion filtered everything — relax it
-                candidates = [
-                    self.replies[i]
-                    for i, s in enumerate(sims)
-                    if s >= threshold and self.replies[i].strip()
-                ]
-            return random.choice(candidates) if candidates else None
-        return None
+    def top_candidates(self, text: str, limit: int = 30) -> List[dict]:
+        if self.vectorizer is None or self.matrix is None or not text.strip():
+            return []
 
-# Combined bot
+        q = normalize(text)
+        vec = self.vectorizer.transform([q])
+        sims = cosine_similarity(vec, self.matrix).flatten()
+
+        if sims.size == 0:
+            return []
+
+        order = np.argsort(sims)[::-1][:limit]
+        out = []
+        for i in order:
+            if sims[i] <= 0:
+                continue
+            out.append({
+                "parent": self.keys[i],
+                "reply": self.replies[i],
+                "reply_norm": self.reply_norms[i],
+                "sim": float(sims[i]),
+                "freq": self.reply_freq[self.reply_norms[i]],
+            })
+        return out
+        
+
 class BierliBot:
-    def __init__(self, db_path: str = DB_PATH, retrieval_threshold: float = 0.25):
-        self.threshold = retrieval_threshold
+    def __init__(self, db_path: str = DB_PATH):
         self.retrieval = RetrievalBrain()
         self.markov = MarkovBrain()
         self.emojis = EmojiResolver()
-        self._recent: deque = deque(maxlen=6)
+
+        self._recent_raw: deque = deque(maxlen=8)
+        self._recent_norm: deque = deque(maxlen=8)
+
         self._load(db_path)
 
     def _load(self, db_path: str):
         conn = sqlite3.connect(db_path)
         c = conn.cursor()
 
-        # pairs → retrieval
         c.execute("SELECT parentKey, reply FROM pairs WHERE parentKey != '' AND reply != ''")
         rows = c.fetchall()
         keys, replies = zip(*rows) if rows else ([], [])
         print(f"[brain] loading {len(keys)} pairs for retrieval…", file=sys.stderr)
         self.retrieval.train(list(keys), list(replies))
 
-        # all messages → markov
         c.execute("SELECT content FROM messages WHERE content != ''")
         messages = [r[0] for r in c.fetchall()]
         print(f"[brain] training markov on {len(messages)} messages…", file=sys.stderr)
@@ -167,28 +247,140 @@ class BierliBot:
         conn.close()
         print("[brain] ready.\n", file=sys.stderr)
 
+    def _score_candidate(self, inp: str, cand: dict) -> float:
+        score = cand["sim"] * 2.6
+
+        # penalize globally common replies
+        score -= math.log1p(cand["freq"]) * 0.45
+
+        # penalize recent repeats heavily
+        if cand["reply_norm"] in self._recent_norm:
+            score -= 2.0
+
+        # generic tiny replies should lose unless similarity is very high
+        if looks_generic(cand["reply"]):
+            score -= 0.7
+
+        # prefer some lexical relation, but not parroting
+        overlap = lexical_overlap(inp, cand["reply"])
+        score += overlap * 0.35
+        if overlap > 0.75:
+            score -= 0.9
+
+        # question compatibility
+        if is_question(inp):
+            if "?" in cand["reply"]:
+                score += 0.15
+            elif len(tokenize(cand["reply"])) <= 1:
+                score -= 0.25
+
+        # length shaping
+        in_len = len(tokenize(inp))
+        out_len = len(tokenize(cand["reply"]))
+        if in_len <= 3 and out_len > 10:
+            score -= 0.45
+        if in_len >= 8 and out_len <= 1:
+            score -= 0.35
+
+        return score
+
+    def _pick_retrieval(self, text: str) -> Optional[str]:
+        cands = self.retrieval.top_candidates(text, limit=35)
+        if not cands:
+            return None
+
+        scored = [(self._score_candidate(text, c), c) for c in cands]
+        scored.sort(key=lambda x: x[0], reverse=True)
+
+        # keep only reasonably good options
+        best = scored[0][0]
+        shortlisted = [c for s, c in scored if s >= best - 0.45 and s > 0.15]
+        if not shortlisted:
+            return None
+
+        # dedupe near-identical replies
+        seen = set()
+        unique = []
+        for c in shortlisted:
+            nr = c["reply_norm"]
+            if nr in seen:
+                continue
+            seen.add(nr)
+            unique.append(c)
+
+        if not unique:
+            return None
+
+        top = unique[:5]
+
+        # weighted random among the top few
+        weights = []
+        for c in top:
+            s = max(0.05, self._score_candidate(text, c))
+            weights.append(s)
+
+        return random.choices([c["reply"] for c in top], weights=weights, k=1)[0]
+
+    def _mutate_reply(self, base_reply: str, user_text: str) -> str:
+        # sometimes keep retrieval untouched
+        if random.random() < 0.55:
+            return base_reply
+
+        # sometimes extend it with Markov continuation
+        if random.random() < 0.55:
+            continued = self.markov.continue_from(base_reply, extra_words=random.randint(3, 7))
+            if continued and normalize(continued) != normalize(base_reply):
+                return continued
+
+        # otherwise generate from the retrieved reply as seed and keep only if close enough
+        gen = self.markov.generate(seed=base_reply, max_words=max(6, len(tokenize(base_reply)) + 5))
+        if gen:
+            if lexical_overlap(base_reply, gen) >= 0.3:
+                return gen
+
+        return base_reply
+
+    def _quality_ok(self, text: str) -> bool:
+        nt = normalize(text)
+        toks = tokenize(nt)
+
+        if not nt:
+            return False
+        if nt in self._recent_norm:
+            return False
+        if len(toks) > 20:
+            return False
+
+        # avoid weird loops
+        for i in range(len(toks) - 2):
+            if toks[i] == toks[i + 1] == toks[i + 2]:
+                return False
+
+        return True
+
     def reply(self, text: str) -> str:
-        exclude = set(self._recent)
+        hit = self._pick_retrieval(text)
 
-        # 1. try retrieval (passes recent replies to avoid repeats)
-        hit = self.retrieval.query(text, threshold=self.threshold, exclude=exclude)
-
-        # 2. fall back to markov, retry a few times to dodge recent replies
-        if hit is None:
-            for _ in range(4):
-                candidate = self.markov.generate(seed=text, max_words=25)
-                if candidate and candidate not in exclude:
-                    hit = candidate
+        if hit is not None:
+            candidate = self._mutate_reply(hit, text)
+            if not self._quality_ok(candidate):
+                candidate = hit
+        else:
+            candidate = ""
+            for _ in range(6):
+                gen = self.markov.generate(seed=text, max_words=16)
+                if self._quality_ok(gen):
+                    candidate = gen
                     break
-            if hit is None:
-                hit = self.markov.generate(seed=text, max_words=25) or "…"
+            if not candidate:
+                candidate = "jo eh"
 
-        raw = self.emojis.resolve(hit)
-        self._recent.append(raw)
+        raw = self.emojis.resolve(candidate)
+        self._recent_raw.append(raw)
+        self._recent_norm.append(normalize(raw))
         return raw
 
     def serve(self):
-        """JSON line server mode: read {text} from stdin, write {ok, result} to stdout."""
         sys.stdout.reconfigure(encoding="utf-8", errors="replace")
         sys.stdin.reconfigure(encoding="utf-8", errors="replace")
         for line in sys.stdin:
@@ -214,7 +406,7 @@ class BierliBot:
         except (KeyboardInterrupt, EOFError):
             print("\ntschüss!")
 
-# Entry point
+
 if __name__ == "__main__":
     bot = BierliBot()
     if len(sys.argv) > 1 and sys.argv[1] == "--serve":
