@@ -4,7 +4,7 @@ import json
 import random
 import sqlite3
 import os
-from collections import defaultdict
+from collections import defaultdict, deque
 from difflib import get_close_matches
 
 import numpy as np
@@ -112,7 +112,7 @@ class RetrievalBrain:
         )
         self.matrix = self.vectorizer.fit_transform(self.keys)
 
-    def query(self, text: str, threshold: float = 0.25) -> Optional[str]:
+    def query(self, text: str, threshold: float = 0.25, exclude: set = None) -> Optional[str]:
         if self.vectorizer is None or not text.strip():
             return None
         vec = self.vectorizer.transform([normalize(text)])
@@ -120,13 +120,21 @@ class RetrievalBrain:
         best_idx = int(np.argmax(sims))
         best_score = float(sims[best_idx])
         if best_score >= threshold:
-            # collect all replies at this score level (±0.01) for variety
+            # widen pool to ±0.15 of best score for variety, still above threshold
             candidates = [
                 self.replies[i]
                 for i, s in enumerate(sims)
-                if s >= best_score - 0.01 and self.replies[i].strip()
+                if s >= max(best_score - 0.15, threshold) and self.replies[i].strip()
+                and (exclude is None or self.replies[i] not in exclude)
             ]
-            return random.choice(candidates)
+            if not candidates:
+                # exclusion filtered everything — relax it
+                candidates = [
+                    self.replies[i]
+                    for i, s in enumerate(sims)
+                    if s >= threshold and self.replies[i].strip()
+                ]
+            return random.choice(candidates) if candidates else None
         return None
 
 # Combined bot
@@ -136,6 +144,7 @@ class BierliBot:
         self.retrieval = RetrievalBrain()
         self.markov = MarkovBrain()
         self.emojis = EmojiResolver()
+        self._recent: deque = deque(maxlen=6)
         self._load(db_path)
 
     def _load(self, db_path: str):
@@ -159,10 +168,24 @@ class BierliBot:
         print("[brain] ready.\n", file=sys.stderr)
 
     def reply(self, text: str) -> str:
-        # 1. try retrieval
-        hit = self.retrieval.query(text, threshold=self.threshold)
-        raw = hit if hit else self.markov.generate(seed=text, max_words=25) or "…"
-        return self.emojis.resolve(raw)
+        exclude = set(self._recent)
+
+        # 1. try retrieval (passes recent replies to avoid repeats)
+        hit = self.retrieval.query(text, threshold=self.threshold, exclude=exclude)
+
+        # 2. fall back to markov, retry a few times to dodge recent replies
+        if hit is None:
+            for _ in range(4):
+                candidate = self.markov.generate(seed=text, max_words=25)
+                if candidate and candidate not in exclude:
+                    hit = candidate
+                    break
+            if hit is None:
+                hit = self.markov.generate(seed=text, max_words=25) or "…"
+
+        raw = self.emojis.resolve(hit)
+        self._recent.append(raw)
+        return raw
 
     def serve(self):
         """JSON line server mode: read {text} from stdin, write {ok, result} to stdout."""
