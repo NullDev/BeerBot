@@ -6,14 +6,12 @@ import BirthdayChecker from "../crons/birthdayChecker.js";
 import UnverifiedUserCleanupHandler from "../crons/removeUnverifiedUsers.js";
 import NewcomerRoleCleanupHandler from "../crons/removeNewcomerRoles.js";
 // import sendRandomMsg from "../util/sendRandomMsg.js";
-// import { DailyTrainer } from "../crons/aiTrainer.js";
 import pingRandom from "../crons/pingRandom.js";
+import { aiWorker } from "../events/messageCreate.js";
 
 // ========================= //
 // = Copyright (c) NullDev = //
 // ========================= //
-
-// const trainer = new DailyTrainer();
 
 /**
  * Schedule all crons
@@ -29,18 +27,15 @@ const scheduleCrons = async function(client){
         await NewcomerRoleCleanupHandler.removeNewcomerRoles(client);
     });
 
-    // daily cron at 01:00
-    /*
-    cron.schedule("0 1 * * *", async() => {
+    // daily brain reload at 03:00
+    cron.schedule("0 3 * * *", async() => {
         try {
-            await trainer.train();
-            Log.done("AI Training completed successfully.");
+            await aiWorker.reload();
         }
         catch (e){
-            Log.error("Error during AI training: " + e);
+            Log.error("[AIWorker] Daily reload failed: " + e);
         }
     });
-    */
 
     // yearly cron on January 1st at 00:00
     cron.schedule("0 0 1 1 *", async() => {

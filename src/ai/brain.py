@@ -389,8 +389,12 @@ class BierliBot:
                 continue
             try:
                 req = json.loads(line)
-                result = self.reply(req.get("text", ""))
-                print(json.dumps({"ok": True, "result": result}), flush=True)
+                if req.get("reload"):
+                    self._load(DB_PATH)
+                    print(json.dumps({"ok": True, "result": "reloaded"}), flush=True)
+                else:
+                    result = self.reply(req.get("text", ""))
+                    print(json.dumps({"ok": True, "result": result}), flush=True)
             except Exception as e:
                 print(json.dumps({"ok": False, "error": str(e)}), flush=True)
 

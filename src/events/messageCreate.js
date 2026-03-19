@@ -10,7 +10,7 @@ import Log from "../util/log.js";
 // = Copyright (c) NullDev = //
 // ========================= //
 
-const aiWorker = new PythonAIWorker();
+export const aiWorker = new PythonAIWorker();
 
 const brain = new MessageLearner();
 await brain.init();

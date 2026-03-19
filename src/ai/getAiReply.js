@@ -122,6 +122,29 @@ export class PythonAIWorker {
         });
     }
 
+    reload(){
+        if (!this.#ready) return Promise.reject(new Error("Python worker not running"));
+
+        return new Promise((resolve, reject) => {
+            this.#proc?.stdin?.write(JSON.stringify({ reload: true }) + "\n");
+
+            const onData = (/** @type {string} */ data) => {
+                try {
+                    const msg = JSON.parse(data.toString());
+                    if (msg.ok){
+                        Log.done("[AIWorker] Brain reloaded from DB.");
+                        resolve();
+                    }
+                    else reject(new Error(msg.error));
+                }
+                catch (e){ reject(e); }
+                finally { this.#proc?.stdout?.off("data", onData); }
+            };
+
+            this.#proc?.stdout?.on("data", onData);
+        });
+    }
+
     stop(){
         if (this.#proc){
             this.#proc?.stdin?.end();
