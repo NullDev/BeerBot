@@ -51,6 +51,26 @@ const voiceStateUpdateHandler = async function(oldState, newState){
 
         await mainVoiceChannel.send({
             content: `${pings}\n\n${joiningUser} is im ${pair.label} Warteraum!`,
+            components: [ // @ts-ignore
+                {
+                    type: 1,
+                    components: [
+                        {
+                            type: 2,
+                            custom_id: `vc_move_${joiningUser?.id}_${mainVoiceChannel.id}`,
+                            label: "Move",
+                            style: 3, // Success
+                            emoji: "📥",
+                        },
+                        {
+                            type: 2,
+                            custom_id: `vc_ignore_${mainVoiceChannel.id}`,
+                            label: "Ignorieren",
+                            style: 2, // Secondary
+                        },
+                    ],
+                },
+            ],
         });
 
         Log.done(`User ${joiningUser?.user.displayName} joined waiting room. Pinged ${membersInMain.size} members in ${pair.label}`);

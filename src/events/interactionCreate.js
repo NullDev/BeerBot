@@ -162,6 +162,55 @@ const handleButton = async function(interaction){
         }
     }
 
+    else if (interaction.customId.startsWith("vc_move_")){
+        const [,, targetUserId, targetChannelId] = interaction.customId.split("_");
+        const {guild} = interaction;
+
+        if (!guild){
+            return await interaction.reply({
+                content: "Server ned gfunden.",
+                flags: [MessageFlags.Ephemeral],
+            });
+        }
+
+        const clicker = await guild.members.fetch(interaction.user.id).catch(() => null);
+        if (clicker?.voice.channelId !== targetChannelId){
+            return await interaction.reply({
+                content: "Du musst im Ziel-VC sein um jemanden zu verschieben.",
+                flags: [MessageFlags.Ephemeral],
+            });
+        }
+
+        const targetMember = await guild.members.fetch(targetUserId).catch(() => null);
+        if (!targetMember?.voice.channelId){
+            return await interaction.update({
+                content: `${interaction.message.content}\n\n⚠️ ${targetMember ?? "User"} is nimmer im Warteraum.`,
+                components: [],
+            });
+        }
+
+        try {
+            await targetMember.voice.setChannel(targetChannelId);
+            return await interaction.update({
+                content: `${interaction.message.content}\n\n✅ ${targetMember} wurde von ${interaction.user} verschoben.`,
+                components: [],
+            });
+        }
+        catch (error){
+            Log.error("Error moving user to target VC:", error);
+            return await interaction.reply({
+                content: "Beim Verschieben is wos schief gongen =(",
+                flags: [MessageFlags.Ephemeral],
+            });
+        }
+    }
+    else if (interaction.customId.startsWith("vc_ignore_")){
+        return await interaction.update({
+            content: `${interaction.message.content}\n\n🚫 Ignoriert von ${interaction.user}.`,
+            components: [],
+        });
+    }
+
     else if (interaction.customId === "yes" || interaction.customId === "no") return null;
 
     return Log.warn(`Button interaction received but not handled: ${interaction.customId}`);
