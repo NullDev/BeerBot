@@ -1,3 +1,4 @@
+import { EmbedBuilder } from "discord.js";
 import { config } from "../../config/config.js";
 import Log from "../util/log.js";
 
@@ -49,8 +50,16 @@ const voiceStateUpdateHandler = async function(oldState, newState){
 
         const pings = membersInMain.map(member => member.toString()).join(" ");
 
+        const embed = new EmbedBuilder()
+            .setTitle("🔔┃Warteraum")
+            .setDescription(`${joiningUser} is im **${pair.label}** Warteraum!`)
+            .setThumbnail(joiningUser?.displayAvatarURL() ?? null)
+            .setColor(3447003)
+            .setTimestamp();
+
         await mainVoiceChannel.send({
-            content: `${pings}\n\n${joiningUser} is im ${pair.label} Warteraum!`,
+            content: pings,
+            embeds: [embed],
             components: [ // @ts-ignore
                 {
                     type: 1,

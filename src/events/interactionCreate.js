@@ -1,5 +1,5 @@
 import { BunDB } from "bun.db";
-import { MessageFlags, ButtonStyle } from "discord.js";
+import { MessageFlags, ButtonStyle, EmbedBuilder } from "discord.js";
 import { startDMVerification, handleBirthdayPingButton, handleGenderSelection } from "../service/dmVerification/dmVerification.js";
 import { getAgeRole, removeExistingAgeRoles } from "../service/dmVerification/utils.js";
 import { deleteUserData } from "../commands/user/datenschutz.js";
@@ -181,10 +181,17 @@ const handleButton = async function(interaction){
             });
         }
 
+        const baseEmbed = interaction.message.embeds[0]
+            ? EmbedBuilder.from(interaction.message.embeds[0])
+            : new EmbedBuilder();
+
         const targetMember = await guild.members.fetch(targetUserId).catch(() => null);
         if (!targetMember?.voice.channelId){
             return await interaction.update({
-                content: `${interaction.message.content}\n\n⚠️ ${targetMember ?? "User"} is nimmer im Warteraum.`,
+                embeds: [baseEmbed
+                    .setColor(16705372) // yellow
+                    .addFields({ name: "⚠️ Status", value: `${targetMember ?? "User"} is nimmer im Warteraum.` }),
+                ],
                 components: [],
             });
         }
@@ -192,7 +199,10 @@ const handleButton = async function(interaction){
         try {
             await targetMember.voice.setChannel(targetChannelId);
             return await interaction.update({
-                content: `${interaction.message.content}\n\n✅ ${targetMember} wurde von ${interaction.user} verschoben.`,
+                embeds: [baseEmbed
+                    .setColor(5763719) // green
+                    .addFields({ name: "✅ Verschoben", value: `${targetMember} wurde von ${interaction.user} verschoben.` }),
+                ],
                 components: [],
             });
         }
@@ -205,8 +215,15 @@ const handleButton = async function(interaction){
         }
     }
     else if (interaction.customId.startsWith("vc_ignore_")){
+        const baseEmbed = interaction.message.embeds[0]
+            ? EmbedBuilder.from(interaction.message.embeds[0])
+            : new EmbedBuilder();
+
         return await interaction.update({
-            content: `${interaction.message.content}\n\n🚫 Ignoriert von ${interaction.user}.`,
+            embeds: [baseEmbed
+                .setColor(9807270) // gray
+                .addFields({ name: "🚫 Ignoriert", value: `von ${interaction.user}` }),
+            ],
             components: [],
         });
     }
