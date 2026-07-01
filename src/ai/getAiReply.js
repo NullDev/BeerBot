@@ -37,7 +37,7 @@ export class PythonAIWorker {
      * Get the correct Python executable path based on the OS.
      *
      * @return {string}
-     * @memberof DailyTrainer
+     * @memberof PythonAIWorker
      */
     #getPyPath(){
         const candidates = os.platform() === "win32"
@@ -67,16 +67,19 @@ export class PythonAIWorker {
             stdio: ["pipe", "pipe", "inherit"], // stdin, stdout, stderr
         });
 
+        // @ts-ignore
         this.#proc.on("spawn", () => {
             Log.done("[AIWorker] Python AI Worker started with PID " + this.#proc?.pid);
         });
 
         this.#proc.stdout?.setEncoding("utf8");
 
+        // @ts-ignore
         this.#proc.on("error", (/** @type {Error} */ err) => {
             Log.error("[AIWorker] Failed to start Python process:", err);
         });
 
+        // @ts-ignore
         this.#proc.on("exit", (/** @type {any} */ code, /** @type {any} */ signal) => {
             Log.warn(`[AIWorker] Python process exited with code=${code} signal=${signal}`);
             this.#ready = false;
@@ -90,14 +93,15 @@ export class PythonAIWorker {
      * Send text to the Python process for inference and get the response.
      *
      * @param {string} text
+     * @param {Array<string>} [context] previous messages, most-recent first
      * @return {Promise<string>}
      * @memberof PythonAIWorker
      */
-    infer(text){
+    infer(text, context = []){
         if (!this.#ready) return Promise.reject(new Error("Python worker not running"));
 
         return new Promise((resolve, reject) => {
-            const req = JSON.stringify({ text }) + "\n";
+            const req = JSON.stringify({ text, context }) + "\n";
             this.#proc?.stdin?.write(req);
 
             const onData = (/** @type {string} */ data) => {
@@ -125,7 +129,7 @@ export class PythonAIWorker {
     reload(){
         if (!this.#ready) return Promise.reject(new Error("Python worker not running"));
 
-        return new Promise((resolve, reject) => {
+        return /** @type {Promise<void>} */ (new Promise((resolve, reject) => {
             this.#proc?.stdin?.write(JSON.stringify({ reload: true }) + "\n");
 
             const onData = (/** @type {string} */ data) => {
@@ -142,7 +146,7 @@ export class PythonAIWorker {
             };
 
             this.#proc?.stdout?.on("data", onData);
-        });
+        }));
     }
 
     stop(){
