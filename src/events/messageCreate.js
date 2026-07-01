@@ -1,6 +1,7 @@
 import { ChannelType } from "discord.js";
 import { handleDMVerification } from "../service/dmVerification/dmVerification.js";
 import jokes from "../service/jokes.js";
+import { consumeAiReply } from "../ai/aiRateLimit.js";
 import { PythonAIWorker } from "../ai/getAiReply.js";
 import { MessageLearner } from "../ai/MessageLearner.js";
 import { config } from "../../config/config.js";
@@ -58,7 +59,7 @@ const messageCreateHandler = async function(message){
                 id: message.id,
                 content: message.content,
                 channelId: message.channelId, // @ts-ignore
-                authorId: message.author.id,
+                authorId: message.author.id, // @ts-ignore
                 replyToId: message.reference?.messageId ?? null,
                 createdTimestamp: message.createdTimestamp,
             });
@@ -67,21 +68,51 @@ const messageCreateHandler = async function(message){
         // @ts-ignore
         if (message.mentions.has(message.client.user)){
             if (message.content.trim() === `<@!${message.client.user?.id}>`) return;
-            message.channel.sendTyping();
-            let query = cleanMsg(message);
+
+            const botChannelId = config.channels.bot;
+            // @ts-ignore
+            const isOwner = config.discord.bot_owner_ids.includes(message.author.id);
+            const isLimited = !isOwner && !!botChannelId && message.channelId !== botChannelId;
+
+            /** @type {"allow" | "redirect"} */
+            let decision = "allow";
+            if (isLimited){
+                const d = consumeAiReply(message.author.id);
+                if (d === "ignore") return;
+                decision = d;
+            }
+
+            /** @type {import("discord.js").TextBasedChannel} */
+            let replyChannel = message.channel;
+            if (decision === "redirect"){
+                await message.reply({
+                    content: `Lass im <#${botChannelId}> Channel weiterschreiben`,
+                    allowedMentions: { parse: [] },
+                }).catch(() => {});
+
+                const fetched = await message.guild?.channels.fetch(botChannelId).catch(() => null);
+                if (!fetched || !fetched.isTextBased()){
+                    Log.error(`[AIWorker] bot_channel ${botChannelId} not found or not text-based.`);
+                    return;
+                }
+                replyChannel = fetched;
+            }
+
+            if ("sendTyping" in replyChannel) replyChannel.sendTyping();
+            const query = cleanMsg(message);
+
+            // Previous human messages, most-recent first, for weighted
+            // multi-query retrieval in the brain (context[0] = latest).
+            const contexts = [];
 
             try {
                 const prevMessages = await message.channel.messages.fetch({ limit: 4, before: message.id });
                 if (prevMessages.size > 0){
-                    const contexts = [];
                     for (const [, msg] of prevMessages){
                         if (!msg.author.bot && contexts.length < 3){
                             const content = cleanMsg(msg);
                             if (content && content.length > 0) contexts.push(content);
                         }
-                    }
-                    if (contexts.length > 0){
-                        query = `${contexts.reverse().join(" ")} ${query}`;
                     }
                 }
             }
@@ -90,8 +121,17 @@ const messageCreateHandler = async function(message){
             }
 
             try {
-                const reply = await aiWorker.infer(query);
-                await message.reply(reply);
+                const reply = await aiWorker.infer(query, contexts);
+
+                if (decision === "redirect" && "send" in replyChannel){
+                    await replyChannel.send({
+                        content: `<@${message.author.id}> ${reply}`,
+                        allowedMentions: { users: [message.author.id] },
+                    });
+                }
+                else {
+                    await message.reply(reply);
+                }
             }
             catch (err){
                 Log.error("[AIWorker] Inference error:", err);
