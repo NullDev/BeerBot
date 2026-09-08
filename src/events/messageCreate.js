@@ -101,8 +101,6 @@ const messageCreateHandler = async function(message){
             if ("sendTyping" in replyChannel) replyChannel.sendTyping();
             const query = cleanMsg(message);
 
-            // Previous human messages, most-recent first, for weighted
-            // multi-query retrieval in the brain (context[0] = latest).
             const contexts = [];
 
             try {
